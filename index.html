@@ -1,651 +1,1301 @@
-// ============================================================
-// 📊 ALEKSANDAR'S QUEST — MEGA ANALYTICS CENTER v1.0
-// 8 Main Stats · Message Center · SWOT · Player Table · Revenue · Geo
-// + MOJATA TREŠNA: AI Predictor (предвидува трендови за следните 30 дена)
-// All data routed through: aleksandarmakedonskigame@gmail.com
-// ============================================================
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+<title>Мисија на Александар - Патот на Светлината</title>
 
-const AnalyticsCenter = {
-  // ============================================================
-  // SECTION 1: DEMO DATA GENERATION (за демонстрација пред live)
-  // ============================================================
-  demoData: {
-    players: [
-      { name: 'Александар П.',     country: 'mk', flag: '🇲🇰', spent: 4.97,  levels: 37, score: 12400, status: 'premium', lastActive: '2026-05-15', joinedDays: 45 },
-      { name: 'Ана М.',             country: 'bg', flag: '🇧🇬', spent: 0.99,  levels: 18, score: 6200,  status: 'premium', lastActive: '2026-05-16', joinedDays: 22 },
-      { name: 'Стефан К.',         country: 'rs', flag: '🇷🇸', spent: 0,     levels: 12, score: 3800,  status: 'free',    lastActive: '2026-05-16', joinedDays: 8 },
-      { name: 'Безир А.',           country: 'al', flag: '🇦🇱', spent: 1.49,  levels: 24, score: 8100,  status: 'premium', lastActive: '2026-05-14', joinedDays: 30 },
-      { name: 'Никос П.',           country: 'gr', flag: '🇬🇷', spent: 0,     levels: 7,  score: 1900,  status: 'free',    lastActive: '2026-05-13', joinedDays: 5 },
-      { name: 'Марија Ј.',          country: 'mk', flag: '🇲🇰', spent: 2.48,  levels: 31, score: 10500, status: 'premium', lastActive: '2026-05-16', joinedDays: 60 },
-      { name: 'Емилија С.',         country: 'mk', flag: '🇲🇰', spent: 0.49,  levels: 15, score: 5400,  status: 'premium', lastActive: '2026-05-15', joinedDays: 18 },
-      { name: 'Дејан В.',           country: 'rs', flag: '🇷🇸', spent: 0,     levels: 22, score: 7300,  status: 'free',    lastActive: '2026-05-16', joinedDays: 35 },
-      { name: 'Aysel D.',           country: 'tr', flag: '🇹🇷', spent: 1.99,  levels: 28, score: 9200,  status: 'premium', lastActive: '2026-05-14', joinedDays: 28 },
-      { name: 'Petar I.',           country: 'bg', flag: '🇧🇬', spent: 0,     levels: 5,  score: 1200,  status: 'free',    lastActive: '2026-05-10', joinedDays: 3 },
-    ],
-    products: [
-      { id: 'premium', name: 'Премиум Пакет',     price: 0.99, sales: 142, revenue: 140.58, color: '#FFD700' },
-      { id: 'coins',   name: '500 Монети',         price: 0.49, sales: 89,  revenue: 43.61,  color: '#FFA500' },
-      { id: 'lives',   name: 'Беспределни Животи', price: 0.29, sales: 67,  revenue: 19.43,  color: '#EF4444' },
-      { id: 'season',  name: 'Сезонска Картичка',  price: 1.99, sales: 38,  revenue: 75.62,  color: '#A855F7' },
-    ],
-    countries: [
-      { code: 'mk', name: 'Македонија',  flag: '🇲🇰', players: 487, revenue: 142.30 },
-      { code: 'bg', name: 'Бугарија',     flag: '🇧🇬', players: 312, revenue: 84.70  },
-      { code: 'rs', name: 'Србија',        flag: '🇷🇸', players: 298, revenue: 71.20  },
-      { code: 'al', name: 'Албанија',      flag: '🇦🇱', players: 156, revenue: 38.40  },
-      { code: 'gr', name: 'Грција',        flag: '🇬🇷', players: 134, revenue: 32.10  },
-      { code: 'tr', name: 'Турција',       flag: '🇹🇷', players: 98,  revenue: 22.50  },
-      { code: 'ba', name: 'Босна',         flag: '🇧🇦', players: 87,  revenue: 19.80  },
-      { code: 'hr', name: 'Хрватска',      flag: '🇭🇷', players: 76,  revenue: 18.20  },
-      { code: 'si', name: 'Словенија',     flag: '🇸🇮', players: 62,  revenue: 17.40  },
-      { code: 'me', name: 'Црна Гора',     flag: '🇲🇪', players: 45,  revenue: 11.20  },
-      { code: 'xk', name: 'Косово',         flag: '🇽🇰', players: 67,  revenue: 13.80  },
-      { code: 'de', name: 'Германија',     flag: '🇩🇪', players: 89,  revenue: 28.90  },
-      { code: 'at', name: 'Австрија',      flag: '🇦🇹', players: 54,  revenue: 18.70  },
-      { code: 'ch', name: 'Швајцарија',    flag: '🇨🇭', players: 38,  revenue: 21.40  },
-      { code: 'us', name: 'САД',            flag: '🇺🇸', players: 76,  revenue: 38.20  },
-      { code: 'ca', name: 'Канада',         flag: '🇨🇦', players: 43,  revenue: 16.80  },
-      { code: 'au', name: 'Австралија',    flag: '🇦🇺', players: 28,  revenue: 11.40  },
-      { code: 'uk', name: 'Велика Британија', flag: '🇬🇧', players: 65,  revenue: 24.30 },
-      { code: 'fr', name: 'Франција',       flag: '🇫🇷', players: 32,  revenue: 12.10  },
-      { code: 'it', name: 'Италија',        flag: '🇮🇹', players: 47,  revenue: 15.60  },
-    ],
-  },
+<!-- PWA MANIFEST -->
+<link rel="manifest" href="manifest.json">
 
-  // ============================================================
-  // SECTION 2: 8 MAIN STATISTICS
-  // ============================================================
-  getMainStats() {
-    // Try to load real data from localStorage, fall back to demo
-    const transactions = JSON.parse(localStorage.getItem('aq_transactions') || '[]');
-    const events = JSON.parse(localStorage.getItem('aq_tracking_events') || '[]');
-    const leaderboard = JSON.parse(localStorage.getItem('alexander_quest_leaderboard') || '[]');
+<!-- PWA THEME -->
+<meta name="theme-color" content="#FFD700">
+<meta name="background-color" content="#0F0C18">
+<meta name="color-scheme" content="dark">
 
-    // If we have real data, use it; otherwise use demo
-    const useDemo = transactions.length < 5;
+<!-- iOS PWA SUPPORT -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Александар">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 
-    if (useDemo) {
-      const demoCountries = this.demoData.countries;
-      const totalPlayers = demoCountries.reduce((s, c) => s + c.players, 0);
-      const totalRevenue = demoCountries.reduce((s, c) => s + c.revenue, 0);
-      const premiumCount = this.demoData.players.filter(p => p.status === 'premium').length;
-      const totalDemoPlayers = this.demoData.players.length;
-      const totalLevels = this.demoData.players.reduce((s, p) => s + p.levels, 0);
-      const totalTransactions = this.demoData.products.reduce((s, p) => s + p.sales, 0);
+<!-- ANDROID / CHROME PWA -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="Александар">
 
-      return {
-        totalPlayers,
-        totalRevenue: totalRevenue.toFixed(2),
-        premiumPercent: ((premiumCount / totalDemoPlayers) * 100).toFixed(1),
-        activeToday: 187,
-        avgLevel: (totalLevels / totalDemoPlayers).toFixed(1),
-        avgPlayTime: '23 мин',
-        totalPurchases: totalTransactions,
-        avgOrder: (totalRevenue / totalTransactions).toFixed(2),
-        isDemoData: true,
-      };
-    }
+<!-- WINDOWS TILES -->
+<meta name="msapplication-TileColor" content="#0F0C18">
+<meta name="msapplication-TileImage" content="icons/icon-144.png">
 
-    // Real data
-    const totalRevenue = transactions.reduce((s, t) => s + (t.amount || 0), 0) / 100;
-    const premiumPlayers = transactions.filter(t => t.product === 'premium').length;
-    return {
-      totalPlayers: leaderboard.length || 1,
-      totalRevenue: totalRevenue.toFixed(2),
-      premiumPercent: ((premiumPlayers / Math.max(1, leaderboard.length)) * 100).toFixed(1),
-      activeToday: events.filter(e => {
-        const today = new Date().toDateString();
-        return new Date(e.data?.timestamp).toDateString() === today;
-      }).length,
-      avgLevel: (leaderboard.reduce((s, l) => s + (l.level || 0), 0) / Math.max(1, leaderboard.length)).toFixed(1),
-      avgPlayTime: Math.floor((window.MagicTracking?.mouseData?.timeOnPage || 0) / 60) + ' мин',
-      totalPurchases: transactions.length,
-      avgOrder: transactions.length ? (totalRevenue / transactions.length).toFixed(2) : '0.00',
-      isDemoData: false,
-    };
-  },
+<!-- FAVICONS -->
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 
-  // ============================================================
-  // SECTION 3: MESSAGE CENTER — TEMPLATES
-  // ============================================================
-  messageTemplates: [
-    {
-      id: 'christmas',
-      icon: '🎄',
-      title: 'Божикна Честитка',
-      audience: 'Сите играчи',
-      subject: '🎄 Среќен Божик од Александар!',
-      body: 'Драг патнику!\n\nАлександар и неговите камаради ти посакуваат среќен и благословен Божик! Како подарок, добиваш 100 БЕСПЛАТНИ монети — отвори ja играта и ќе ги најдеш!\n\nНека твојот пат на светлината биде уште посветол!\n\nСо почит,\nТимот на „Мисија на Александар"',
-      coupon: 'BOZIC100',
-    },
-    {
-      id: 'newyear',
-      icon: '🎉',
-      title: 'Нова Година',
-      audience: 'Сите играчи',
-      subject: '🎉 Среќна Нова Година — Нов почеток!',
-      body: 'Драг патнику!\n\nНова година — ново ниво! Тимот ти посакува 365 нови приключенија. Како новогодишен подарок: 50% попуст на Премиум Пакетот (важи 7 дена).\n\nСподели го новогодишниот пат со пријатели!\n\nСо почит и многу нови нивоа,\nТимот на „Мисија на Александар"',
-      coupon: 'NEWYEAR50',
-    },
-    {
-      id: 'ilinden',
-      icon: '🇲🇰',
-      title: 'Илинден',
-      audience: 'Сите играчи',
-      subject: '🇲🇰 Среќен Илинден — 2 август!',
-      body: 'Драг патнику!\n\nДенес го славиме Илинден — денот на македонската слобода и достоинство. Како синови и ќерки на Александар и Гоце, ние знаеме дека најголемата победа е победата на знаењето над незнаењето.\n\nКако подарок: 200 БЕСПЛАТНИ монети + специјален Илинденски пасош!\n\nДолго живееше слободна Македонија!\nТимот на „Мисија на Александар"',
-      coupon: 'ILINDEN200',
-    },
-    {
-      id: 'newepisode',
-      icon: '🏆',
-      title: 'Нова Епизода',
-      audience: 'Кои ги завршиле сите нивоа',
-      subject: '🏆 НОВО! Епизода 4 — Источниот Поход',
-      body: 'Драг легендо!\n\nТи кој го заврши сите 37 нивоа — имам нешто специјално за тебе. Денес лансиравме НОВА епизода: „Источниот Поход" — 12 нови нивоа за Александровиот пат до Индија!\n\nАко завршиш сè пред крајот на месецот — добиваш ексклузивен ТИТАНОВ ПАСОШ во SVG!\n\nНека твоето наследство расте,\nТимот на „Мисија на Александар"',
-      coupon: 'LEGEND12',
-    },
-    {
-      id: 'discount',
-      icon: '💰',
-      title: 'Попуст',
-      audience: 'Сите играчи',
-      subject: '💰 САМО 24 ЧАСА — 70% попуст на сè!',
-      body: 'Драг патнику!\n\nСамо денес: 70% попуст на Премиум Пакет, монети, и сезонски карти! Тоа е најмалата цена досега.\n\n⏰ Останати: 24 часа\n💳 Сите платежни системи прифатени (Stripe, PayPal, Apple Pay, Google Pay)\n\nНе пропуштај го моментот — патот на светлината те чека!\n\nТимот на „Мисија на Александар"',
-      coupon: 'FLASH70',
-    },
-    {
-      id: 'vipreward',
-      icon: '🎁',
-      title: 'VIP Награда',
-      audience: 'Премиум играчи',
-      subject: '🎁 Специјална VIP награда за тебе!',
-      body: 'Драг VIP играчу!\n\nКако благодарност за твојата поддршка, ти подаруваме:\n\n✨ 500 БЕСПЛАТНИ монети\n👑 Ексклузивна Златна Корона (само за VIP)\n🏛️ Право на анонимна VIP мудрост на Ѕидот на Мудрост\n\nОвие награди се само за тебе — те ценам!\n\nСо почит,\nТимот на „Мисија на Александар"',
-      coupon: 'VIP500',
-    },
-  ],
+<!-- ANTI-ZOOM ON INPUT FOCUS (iOS) -->
+<meta name="format-detection" content="telephone=no">
 
-  sendMessage(templateId, customAudience = null) {
-    const template = this.messageTemplates.find(t => t.id === templateId);
-    if (!template) return;
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://js.stripe.com/v3/"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+<meta name="description" content="Мисија на Александар — образовна авантура за деца. 37 нивоа на знаење, мудрост и сила. Светски прв систем на колективна мудрост — Living Legacy Capsule.">
+<meta property="og:title" content="Мисија на Александар — Патот на Светлината">
+<meta property="og:description" content="Светска уникатна игра: 37 нивоа, 4 AI агенти, колективен ѕид на мудрост, и личен пасош на знаењето.">
+<meta property="og:type" content="website">
 
-    // Track sending
-    if (window.MagicTracking) {
-      window.MagicTracking.trackEvent('message_sent', {
-        template: templateId,
-        audience: customAudience || template.audience,
-      });
-    }
-
-    // Compose mailto with template for the operator
-    const subject = encodeURIComponent(template.subject);
-    const body = encodeURIComponent(template.body + `\n\n--- \nКупон код: ${template.coupon}\nИспратено до: ${customAudience || template.audience}`);
-    const mailto = `mailto:?bcc=aleksandarmakedonskigame@gmail.com&subject=${subject}&body=${body}`;
-
-    // Open in new window so user can review before sending
-    const link = document.createElement('a');
-    link.href = mailto;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    // Show success toast
-    this.toast(`📧 Шаблонот „${template.title}" е подготвен! Прегледај го пред да го испратиш.`);
-  },
-
-  // ============================================================
-  // SECTION 4: SWOT ANALYSIS (AI-driven)
-  // ============================================================
-  generateSWOT() {
-    const stats = this.getMainStats();
-    const revenue = parseFloat(stats.totalRevenue);
-    const premium = parseFloat(stats.premiumPercent);
-    const players = stats.totalPlayers;
-
-    return {
-      strengths: [
-        { icon: '🏛️', title: 'Светска уникатна функционалност', desc: 'Living Legacy Capsule + Wisdom Wall — никој друг не го има' },
-        { icon: '🌐', title: 'PWA на сите платформи', desc: 'Една кодна база, работи на iPhone, Android, PC, Mac' },
-        { icon: '🇲🇰', title: 'Силна Македонија присутност', desc: `${this.demoData.countries[0].players} играчи од МК` },
-        { icon: '👁️', title: 'AI Coach + Magic Tracking', desc: 'Активно помага играчи да напредуваат' },
-        { icon: '📚', title: 'Едукативна вредност', desc: '37 верификувани историски факти за Александар' },
-      ],
-      weaknesses: [
-        { icon: '💳', title: premium < 20 ? 'Низок Premium конверзија' : 'Можност за зголемување', desc: `${premium}% premium играчи — индустриски просек е 20-30%` },
-        { icon: '🌍', title: 'Локализација во работа', desc: 'Само MK + EN — недостасуваат BG, SR, AL, GR' },
-        { icon: '📺', title: 'Ограничена видео содржина', desc: 'Нема trailer, gameplay видеа, или TikTok content' },
-        { icon: '🔊', title: 'Недостасува звучен дизајн', desc: 'Тивка игра — музика и звучни ефекти би ja подобриле' },
-      ],
-      opportunities: [
-        { icon: '🇧🇬', title: 'Бугарски пазар', desc: `${this.demoData.countries[1].players} играчи — потенцијал за раст` },
-        { icon: '📱', title: 'Play Store + App Store', desc: 'Преку PWA Builder + Capacitor (детали во STORE_DEPLOYMENT.md)' },
-        { icon: '🏫', title: 'Образовни институции', desc: 'Училишта во МК + дијаспора — B2B можност' },
-        { icon: '🎮', title: 'Гејминг турнири', desc: 'Месечни натпревари со награди (за вирално ширење)' },
-        { icon: '🎬', title: 'Animated series', desc: 'YouTube канал со анимирани приказни за Александар' },
-      ],
-      threats: [
-        { icon: '🤖', title: 'Конкурентни AI игри', desc: 'GPT-засновани играчки — расте популарноста' },
-        { icon: '📉', title: 'Краток attention span', desc: 'TikTok-генерација — потешко да се задржат играчи' },
-        { icon: '🔒', title: 'Privacy регулатива', desc: 'GDPR/COPPA — мора секогаш да биде ажурирано' },
-        { icon: '💸', title: 'Зависност од Stripe/Google', desc: 'Платформи може да менуваат правила еднострано' },
-      ],
-    };
-  },
-
-  // ============================================================
-  // SECTION 5: AI PREDICTOR (МОЈАТА ТРЕШНА!)
-  // Foresight engine — predicts next 30-day trends
-  // ============================================================
-  predictNext30Days() {
-    const stats = this.getMainStats();
-    const currentRev = parseFloat(stats.totalRevenue);
-    const currentPlayers = stats.totalPlayers;
-
-    // Simple linear projection with growth assumption
-    const dailyGrowth = 0.027; // 2.7% organic growth (typical for PWA games)
-    const days = 30;
-    let projRev = currentRev, projPlayers = currentPlayers;
-    const trend = [];
-    for (let d = 1; d <= days; d++) {
-      projPlayers = Math.floor(projPlayers * (1 + dailyGrowth));
-      projRev = projRev * (1 + dailyGrowth);
-      if (d % 5 === 0) {
-        trend.push({ day: d, players: projPlayers, revenue: projRev.toFixed(2) });
-      }
-    }
-
-    // Generate AI recommendations based on data
-    const recommendations = [];
-    if (parseFloat(stats.premiumPercent) < 15) {
-      recommendations.push({ icon: '💎', priority: 'HIGH', text: 'Premium конверзија е под просек — пробај flash-sale во првата недела' });
-    }
-    if (this.demoData.countries[0].revenue < this.demoData.countries[1].revenue * 2) {
-      recommendations.push({ icon: '🇲🇰', priority: 'MEDIUM', text: 'МК има потенцијал — рекламирај локално преку Facebook/Instagram' });
-    }
-    recommendations.push({ icon: '📱', priority: 'HIGH', text: 'Прибира моментум за Play Store launch — оптимално време е +14 дена' });
-    recommendations.push({ icon: '🎄', priority: 'MEDIUM', text: 'Подготви Божикна кампања 2 недели предвреме за максимален ефект' });
-    recommendations.push({ icon: '🤖', priority: 'LOW', text: 'Активирај AI Coach автоматски пораки за играчи кои не се вратиле 7+ дена' });
-
-    return {
-      finalProjection: { players: projPlayers, revenue: projRev.toFixed(2) },
-      trend,
-      growthRate: (dailyGrowth * 100).toFixed(1) + '% дневно',
-      cagrMonthly: ((Math.pow(1 + dailyGrowth, 30) - 1) * 100).toFixed(1) + '% месечно',
-      recommendations,
-      confidence: 0.78, // 78% confidence interval
-    };
-  },
-
-  // ============================================================
-  // SECTION 6: MAIN RENDER FUNCTION
-  // ============================================================
-  show() {
-    const existing = document.getElementById('analytics-center-modal');
-    if (existing) { existing.remove(); return; }
-
-    const stats = this.getMainStats();
-    const swot = this.generateSWOT();
-    const prediction = this.predictNext30Days();
-
-    const modal = document.createElement('div');
-    modal.id = 'analytics-center-modal';
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(8px);z-index:300;overflow-y:auto;padding:16px;font-family:Inter,sans-serif;color:#FFF8E7';
-
-    modal.innerHTML = `
-      <div style="max-width:1000px;margin:0 auto;background:linear-gradient(135deg,#1A1525,#0F0C18);border:2px solid rgba(168,85,247,0.4);border-radius:24px;padding:24px;box-shadow:0 0 80px rgba(168,85,247,0.3)">
-
-        <!-- HEADER -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;border-bottom:1px solid rgba(168,85,247,0.2);padding-bottom:16px">
-          <div>
-            <h1 style="font-size:28px;font-weight:900;background:linear-gradient(90deg,#a855f7,#ec4899,#FFD700);-webkit-background-clip:text;background-clip:text;color:transparent;margin:0">📊 MEGA АНАЛИТИЧКИ ЦЕНТАР</h1>
-            <p style="color:#a855f7;font-size:13px;margin-top:4px">Командна табла · aleksandarmakedonskigame@gmail.com</p>
-            ${stats.isDemoData ? '<p style="color:#FFA500;font-size:11px;margin-top:4px;font-style:italic">⚠️ ДЕМО РЕЖИМ — се прикажуваат симулирани податоци. Кога ќе има реални играчи, ќе се замени со живи бројки.</p>' : '<p style="color:#22c55e;font-size:11px;margin-top:4px">✅ ЖИВИ ПОДАТОЦИ</p>'}
-          </div>
-          <button onclick="document.getElementById('analytics-center-modal').remove()" style="background:rgba(255,255,255,0.1);border:none;color:white;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:20px;flex-shrink:0">×</button>
-        </div>
-
-        <!-- TABS -->
-        <div style="display:flex;gap:6px;margin-bottom:20px;overflow-x:auto;padding-bottom:6px">
-          ${[
-            ['stats','📈 Статистики'],
-            ['messages','📨 Пораки'],
-            ['swot','🤖 SWOT Анализа'],
-            ['players','🎮 Играчи'],
-            ['products','📊 Производи'],
-            ['geo','🌍 Земји'],
-            ['predict','🔮 AI Предвидувач'],
-          ].map(([id,label]) => `
-            <button onclick="AnalyticsCenter.switchTab('${id}')" data-tab="${id}" class="ac-tab" style="background:rgba(255,255,255,0.05);border:1px solid rgba(168,85,247,0.2);color:#FFF8E7;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;white-space:nowrap;transition:all 0.2s">${label}</button>
-          `).join('')}
-        </div>
-
-        <!-- CONTENT AREAS -->
-        <div id="ac-tab-stats" class="ac-tab-content">${this.renderStatsTab(stats)}</div>
-        <div id="ac-tab-messages" class="ac-tab-content" style="display:none">${this.renderMessagesTab()}</div>
-        <div id="ac-tab-swot" class="ac-tab-content" style="display:none">${this.renderSWOTTab(swot)}</div>
-        <div id="ac-tab-players" class="ac-tab-content" style="display:none">${this.renderPlayersTab()}</div>
-        <div id="ac-tab-products" class="ac-tab-content" style="display:none">${this.renderProductsTab()}</div>
-        <div id="ac-tab-geo" class="ac-tab-content" style="display:none">${this.renderGeoTab()}</div>
-        <div id="ac-tab-predict" class="ac-tab-content" style="display:none">${this.renderPredictTab(prediction)}</div>
-
-        <!-- FOOTER -->
-        <div style="margin-top:24px;padding-top:16px;border-top:1px solid rgba(168,85,247,0.2);text-align:center;color:#FFF8E7;opacity:0.4;font-size:11px">
-          Сите податоци локални во browser-от · GDPR/COPPA усогласено · Контакт: aleksandarmakedonskigame@gmail.com
-        </div>
-      </div>
-
-      <style>
-        .ac-stat-card { background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.25); border-radius: 14px; padding: 16px; transition: all 0.2s; }
-        .ac-stat-card:hover { background: rgba(168,85,247,0.15); transform: translateY(-2px); }
-        .ac-tab.active { background: rgba(168,85,247,0.3) !important; border-color: rgba(168,85,247,0.6) !important; color: #FFD700 !important; }
-        .ac-row { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 12px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; transition: background 0.2s; }
-        .ac-row:hover { background: rgba(255,255,255,0.07); }
-        .ac-msg-card { background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.2); border-radius: 14px; padding: 14px; cursor: pointer; transition: all 0.2s; }
-        .ac-msg-card:hover { background: rgba(255,215,0,0.12); border-color: rgba(255,215,0,0.5); transform: translateY(-2px); }
-        .ac-swot-card { border-radius: 14px; padding: 14px; margin-bottom: 8px; border: 1px solid; }
-        .ac-bar-bg { background: rgba(255,255,255,0.05); height: 8px; border-radius: 4px; overflow: hidden; }
-        .ac-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s; }
-      </style>
-    `;
-
-    document.body.appendChild(modal);
-
-    // Activate first tab
-    setTimeout(() => {
-      document.querySelector('.ac-tab[data-tab="stats"]')?.classList.add('active');
-    }, 50);
-
-    // Track open
-    if (window.MagicTracking) {
-      window.MagicTracking.trackEvent('analytics_center_opened');
-    }
-  },
-
-  // ============================================================
-  // TAB RENDERERS
-  // ============================================================
-  renderStatsTab(stats) {
-    const items = [
-      { icon: '🎮', label: 'Вкупно Играчи', value: stats.totalPlayers.toLocaleString(), color: '#FFD700' },
-      { icon: '💰', label: 'Вкупен Приход', value: '$' + stats.totalRevenue, color: '#22c55e' },
-      { icon: '👑', label: 'Premium %', value: stats.premiumPercent + '%', color: '#a855f7' },
-      { icon: '⚡', label: 'Активни Денес', value: stats.activeToday, color: '#3b82f6' },
-      { icon: '📈', label: 'Просечно Ниво', value: stats.avgLevel, color: '#f97316' },
-      { icon: '⏱️', label: 'Просечно Време', value: stats.avgPlayTime, color: '#06b6d4' },
-      { icon: '🛒', label: 'Купувања', value: stats.totalPurchases, color: '#ec4899' },
-      { icon: '📊', label: 'Просечна Нарачка', value: '$' + stats.avgOrder, color: '#84cc16' },
-    ];
-    return `
-      <h2 style="color:#FFD700;font-size:18px;margin-bottom:14px">📈 Главни Статистики (live)</h2>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:10px">
-        ${items.map(i => `
-          <div class="ac-stat-card">
-            <div style="font-size:24px">${i.icon}</div>
-            <div style="font-size:22px;font-weight:900;color:${i.color};margin:6px 0">${i.value}</div>
-            <div style="font-size:11px;color:rgba(255,248,231,0.6)">${i.label}</div>
-          </div>
-        `).join('')}
-      </div>
-      <p style="margin-top:20px;color:rgba(255,248,231,0.5);font-size:12px;font-style:italic">💡 Статистиките се ажурираат во реално време врз основа на event-ите од Magic Tracking + Stripe/PayPal трансакциите.</p>
-    `;
-  },
-
-  renderMessagesTab() {
-    return `
-      <h2 style="color:#FFD700;font-size:18px;margin-bottom:14px">📨 Центар за Пораки</h2>
-      <p style="color:rgba(255,248,231,0.6);font-size:13px;margin-bottom:16px">Кликни на шаблон → се отвара email клиент со подготвена порака. Можеш да ja прегледаш и пратиш на својата email-листа.</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:10px">
-        ${this.messageTemplates.map(t => `
-          <div class="ac-msg-card" onclick="AnalyticsCenter.sendMessage('${t.id}')">
-            <div style="font-size:30px">${t.icon}</div>
-            <div style="font-weight:700;color:#FFD700;margin:8px 0 4px;font-size:15px">${t.title}</div>
-            <div style="font-size:11px;color:rgba(255,248,231,0.5);margin-bottom:6px">${t.audience}</div>
-            <div style="font-size:10px;color:#a855f7;background:rgba(168,85,247,0.1);padding:2px 8px;border-radius:8px;display:inline-block">КУПОН: ${t.coupon}</div>
-          </div>
-        `).join('')}
-      </div>
-      <div style="margin-top:20px;padding:14px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:12px">
-        <p style="color:#22c55e;font-weight:bold;font-size:13px;margin-bottom:6px">💡 Како функционира?</p>
-        <p style="color:rgba(255,248,231,0.7);font-size:12px;line-height:1.5">Кога ќе кликнеш шаблон, се отвара твојот email клиент со пред-пополнета порака и BCC до <strong>aleksandarmakedonskigame@gmail.com</strong>. Само додај ja својата email листа во „To:" поле и испрати!</p>
-      </div>
-    `;
-  },
-
-  renderSWOTTab(swot) {
-    const colors = {
-      strengths: { bg: 'rgba(34,197,94,0.1)', border: '#22c55e', label: '✅ Силни Страни' },
-      weaknesses: { bg: 'rgba(239,68,68,0.1)', border: '#ef4444', label: '⚠️ Слаби Страни' },
-      opportunities: { bg: 'rgba(59,130,246,0.1)', border: '#3b82f6', label: '🚀 Можности' },
-      threats: { bg: 'rgba(245,158,11,0.1)', border: '#f59e0b', label: '🔴 Предизвици' },
-    };
-    return `
-      <h2 style="color:#FFD700;font-size:18px;margin-bottom:14px">🤖 AI SWOT Анализа</h2>
-      <p style="color:rgba(255,248,231,0.6);font-size:13px;margin-bottom:16px">AI-генерирана стратешка анализа врз основа на live податоци + индустриски benchmark-и.</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:14px">
-        ${['strengths','weaknesses','opportunities','threats'].map(key => `
-          <div style="background:${colors[key].bg};border:1px solid ${colors[key].border}40;border-radius:14px;padding:14px">
-            <h3 style="color:${colors[key].border};font-size:14px;margin-bottom:10px;font-weight:bold">${colors[key].label}</h3>
-            ${swot[key].map(item => `
-              <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:10px;margin-bottom:6px">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-                  <span style="font-size:18px">${item.icon}</span>
-                  <strong style="font-size:13px;color:#FFF8E7">${item.title}</strong>
-                </div>
-                <p style="font-size:11px;color:rgba(255,248,231,0.65);margin-left:26px">${item.desc}</p>
-              </div>
-            `).join('')}
-          </div>
-        `).join('')}
-      </div>
-    `;
-  },
-
-  renderPlayersTab() {
-    return `
-      <h2 style="color:#FFD700;font-size:18px;margin-bottom:14px">🎮 Кој ja Купил Играта</h2>
-      <div style="margin-bottom:12px;display:flex;gap:8px">
-        <button onclick="AnalyticsCenter.filterPlayers('all')" data-pf="all" class="ac-pfilter" style="background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.5);color:#FFD700;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px">Сите (${this.demoData.players.length})</button>
-        <button onclick="AnalyticsCenter.filterPlayers('premium')" data-pf="premium" class="ac-pfilter" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#FFF8E7;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px">👑 Premium (${this.demoData.players.filter(p=>p.status==='premium').length})</button>
-        <button onclick="AnalyticsCenter.filterPlayers('free')" data-pf="free" class="ac-pfilter" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#FFF8E7;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px">Бесплатни (${this.demoData.players.filter(p=>p.status==='free').length})</button>
-      </div>
-      <div id="ac-players-table" style="max-height:400px;overflow-y:auto">
-        ${this.renderPlayerRows('all')}
-      </div>
-    `;
-  },
-
-  renderPlayerRows(filter = 'all') {
-    let players = this.demoData.players;
-    if (filter === 'premium') players = players.filter(p => p.status === 'premium');
-    if (filter === 'free') players = players.filter(p => p.status === 'free');
-
-    return players.map(p => `
-      <div class="ac-row">
-        <span style="font-size:20px">${p.flag}</span>
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:600;font-size:13px;color:#FFF8E7">${p.name}</div>
-          <div style="font-size:11px;color:rgba(255,248,231,0.5)">Активен: ${p.lastActive} · Приклучен пред ${p.joinedDays}д</div>
-        </div>
-        <div style="display:flex;gap:12px;flex-shrink:0;font-size:11px;align-items:center">
-          <div style="text-align:center"><div style="color:#22c55e;font-weight:bold">$${p.spent.toFixed(2)}</div><div style="color:rgba(255,248,231,0.4);font-size:10px">потрошено</div></div>
-          <div style="text-align:center"><div style="color:#FFD700;font-weight:bold">${p.levels}/37</div><div style="color:rgba(255,248,231,0.4);font-size:10px">нивоа</div></div>
-          <div style="text-align:center"><div style="color:#3b82f6;font-weight:bold">${p.score.toLocaleString()}</div><div style="color:rgba(255,248,231,0.4);font-size:10px">резултат</div></div>
-          <span style="padding:3px 8px;border-radius:8px;font-size:10px;font-weight:bold;${p.status==='premium' ? 'background:rgba(255,215,0,0.2);color:#FFD700' : 'background:rgba(255,255,255,0.08);color:rgba(255,248,231,0.6)'}">${p.status==='premium' ? '👑 PREMIUM' : 'FREE'}</span>
-        </div>
-      </div>
-    `).join('');
-  },
-
-  filterPlayers(filter) {
-    const container = document.getElementById('ac-players-table');
-    if (container) container.innerHTML = this.renderPlayerRows(filter);
-    document.querySelectorAll('.ac-pfilter').forEach(btn => {
-      const active = btn.dataset.pf === filter;
-      btn.style.background = active ? 'rgba(168,85,247,0.2)' : 'rgba(255,255,255,0.05)';
-      btn.style.borderColor = active ? 'rgba(168,85,247,0.5)' : 'rgba(255,255,255,0.15)';
-      btn.style.color = active ? '#FFD700' : '#FFF8E7';
+<!-- 📱 INLINE SERVICE WORKER REGISTRATION (early hint) -->
+<script>
+  // Register SW as early as possible (pwa.js will handle full lifecycle)
+  if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(e => console.warn('[SW early]', e));
     });
-  },
+  }
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0F0C18;color:#FFF8E7;overflow-x:hidden}
+.font-cinzel{font-family:'Cinzel Decorative',serif}
+.font-caveat{font-family:'Caveat',cursive}
+@keyframes float{0%,100%{transform:translateY(0)scale(1);opacity:.3}50%{transform:translateY(-20px)scale(1.2);opacity:.6}}
+@keyframes pulse-glow{0%,100%{box-shadow:0 0 20px rgba(255,215,0,.3)}50%{box-shadow:0 0 40px rgba(255,215,0,.6)}}
+@keyframes slideIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{from{background-position:-200% center}to{background-position:200% center}}
+.particle{position:fixed;border-radius:50%;background:#FFD700;pointer-events:none;z-index:0;animation:float 8s ease-in-out infinite}
+.gold-shimmer{background:linear-gradient(90deg,#FFD700,#FFA500,#FFD700);background-size:200% auto;animation:shimmer 3s linear infinite}
+.screen{display:none;animation:slideIn .5s ease-out}
+.screen.active{display:block}
+.game-btn{background:linear-gradient(135deg,#FFD700,#FFA500);color:#0F0C18;font-weight:700;padding:.75rem 1.5rem;border-radius:9999px;border:none;cursor:pointer;transition:all .3s;font-family:'Inter',sans-serif;font-size:1rem}
+.game-btn:hover{transform:translateY(-3px);box-shadow:0 0 30px rgba(255,215,0,.4)}
+.game-btn-sm{background:rgba(255,215,0,.15);color:#FFD700;border:1px solid rgba(255,215,0,.3);padding:.5rem 1rem;border-radius:.75rem;cursor:pointer;transition:all .3s;font-size:.85rem;display:flex;align-items:center;gap:.5rem}
+.game-btn-sm:hover{background:rgba(255,215,0,.25);border-color:rgba(255,215,0,.5)}
+.level-dot{width:48px;height:48px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .3s;border:2px solid;position:relative}
+.level-dot.locked{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.1);color:rgba(255,255,255,.3);cursor:not-allowed}
+.level-dot.unlocked{background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.3);color:#FFD700}
+.level-dot.unlocked:hover{background:rgba(255,215,0,.2);transform:translateY(-3px)}
+.level-dot.completed{background:rgba(255,215,0,.2);border-color:rgba(255,215,0,.6);color:#FFD700}
+.social-btn{display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:.6rem;border-radius:.75rem;color:#fff;transition:all .3s;font-size:.7rem;font-weight:500}
+.social-btn:hover{transform:scale(1.08)}
+.ai-bubble{padding:.6rem 1rem;border-radius:1rem;margin:.4rem 0;max-width:80%;font-size:.85rem;line-height:1.4}
+.ai-bubble.agent{background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.3);color:#FFF8E7}
+.ai-bubble.user{background:rgba(74,144,226,.2);border:1px solid rgba(74,144,226,.4);color:#4A90E2;margin-left:auto}
+#game-container canvas{border-radius:1rem;border:2px solid rgba(255,215,0,.3);box-shadow:0 0 40px rgba(255,215,0,.15)!important}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#0F0C18}
+::-webkit-scrollbar-thumb{background:#B8860B;border-radius:3px}
+.milestone-card{background:linear-gradient(135deg,rgba(255,215,0,.1),rgba(255,165,0,.05));border:2px dashed rgba(255,215,0,.3);border-radius:1.5rem;padding:1.5rem;text-align:center;position:relative;overflow:hidden}
+.milestone-card.earned{border-style:solid;border-color:rgba(255,215,0,.7);background:linear-gradient(135deg,rgba(255,215,0,.2),rgba(255,165,0,.1))}
+.milestone-badge{position:absolute;top:0;right:0;background:linear-gradient(135deg,#FFD700,#FFA500);color:#0F0C18;padding:.15rem 1.5rem;font-size:.6rem;font-weight:700;transform:rotate(45deg) translate(20%,-50%);letter-spacing:1px}
+.reward-item{opacity:.4;transition:all .3s}
+.reward-item.unlocked{opacity:1}
 
-  renderProductsTab() {
-    const products = this.demoData.products;
-    const total = products.reduce((s, p) => s + p.revenue, 0);
-    return `
-      <h2 style="color:#FFD700;font-size:18px;margin-bottom:14px">📊 Приход по Производи</h2>
-      <p style="color:rgba(255,248,231,0.5);font-size:12px;margin-bottom:14px">Вкупен приход: <strong style="color:#22c55e">$${total.toFixed(2)}</strong> · Прикажани во ред од најпрофитни</p>
-      <div>
-        ${products.sort((a,b)=>b.revenue-a.revenue).map(p => `
-          <div class="ac-row" style="display:block">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <div>
-                <strong style="color:${p.color};font-size:14px">${p.name}</strong>
-                <span style="color:rgba(255,248,231,0.5);font-size:11px;margin-left:8px">$${p.price.toFixed(2)} × ${p.sales}</span>
-              </div>
-              <strong style="color:#22c55e;font-size:15px">$${p.revenue.toFixed(2)}</strong>
-            </div>
-            <div class="ac-bar-bg">
-              <div class="ac-bar-fill" style="background:${p.color};width:${(p.revenue/total*100).toFixed(1)}%"></div>
-            </div>
-            <div style="text-align:right;font-size:10px;color:rgba(255,248,231,0.4);margin-top:4px">${(p.revenue/total*100).toFixed(1)}% од вкупен приход</div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  },
+/* ============================================
+   📱 MOBILE-RESPONSIVE OPTIMIZATIONS
+   ============================================ */
 
-  renderGeoTab() {
-    const countries = [...this.demoData.countries].sort((a,b)=>b.revenue-a.revenue);
-    const maxRev = countries[0].revenue;
-    return `
-      <h2 style="color:#FFD700;font-size:18px;margin-bottom:14px">🌍 Приход по Земји (${countries.length} земји)</h2>
-      <p style="color:rgba(255,248,231,0.5);font-size:12px;margin-bottom:14px">Топ пазари — рангирани по приход. Балканот доминира — пристапот „мисли локално, рекламирај глобално" работи.</p>
-      <div style="max-height:420px;overflow-y:auto">
-        ${countries.map((c, i) => `
-          <div class="ac-row" style="display:block">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-              <div style="display:flex;align-items:center;gap:10px">
-                <span style="font-size:12px;color:rgba(255,248,231,0.4);width:24px">#${i+1}</span>
-                <span style="font-size:20px">${c.flag}</span>
-                <strong style="font-size:13px">${c.name}</strong>
-                <span style="font-size:11px;color:rgba(255,248,231,0.5)">${c.players} играчи</span>
-              </div>
-              <strong style="color:#22c55e;font-size:14px">$${c.revenue.toFixed(2)}</strong>
-            </div>
-            <div class="ac-bar-bg">
-              <div class="ac-bar-fill" style="background:linear-gradient(90deg, #FFD700, #FFA500);width:${(c.revenue/maxRev*100).toFixed(1)}%"></div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  },
-
-  renderPredictTab(p) {
-    return `
-      <h2 style="color:#FFD700;font-size:18px;margin-bottom:6px">🔮 AI ПРЕДВИДУВАЧ — следните 30 дена</h2>
-      <p style="color:rgba(255,248,231,0.5);font-size:12px;margin-bottom:16px">⭐ Мојата трешна на врвот — нема друга детска игра ова не го има. AI анализира трендови и предлага конкретни акции.</p>
-
-      <!-- Big projection numbers -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
-        <div style="background:linear-gradient(135deg,rgba(168,85,247,0.2),rgba(236,72,153,0.1));border:1px solid rgba(168,85,247,0.4);border-radius:14px;padding:18px;text-align:center">
-          <div style="font-size:11px;color:#a855f7;margin-bottom:4px">ПРЕДВИДЕНИ ИГРАЧИ (за 30 дена)</div>
-          <div style="font-size:32px;font-weight:900;background:linear-gradient(90deg,#a855f7,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent">${p.finalProjection.players.toLocaleString()}</div>
-          <div style="font-size:11px;color:rgba(255,248,231,0.5);margin-top:4px">Раст: ${p.cagrMonthly}</div>
-        </div>
-        <div style="background:linear-gradient(135deg,rgba(34,197,94,0.2),rgba(132,204,22,0.1));border:1px solid rgba(34,197,94,0.4);border-radius:14px;padding:18px;text-align:center">
-          <div style="font-size:11px;color:#22c55e;margin-bottom:4px">ПРЕДВИДЕН ПРИХОД (за 30 дена)</div>
-          <div style="font-size:32px;font-weight:900;background:linear-gradient(90deg,#22c55e,#84cc16);-webkit-background-clip:text;background-clip:text;color:transparent">$${parseFloat(p.finalProjection.revenue).toFixed(2)}</div>
-          <div style="font-size:11px;color:rgba(255,248,231,0.5);margin-top:4px">Confidence: ${(p.confidence*100).toFixed(0)}%</div>
-        </div>
-      </div>
-
-      <!-- Trend chart (text-based for now) -->
-      <h3 style="color:#FFA500;font-size:14px;margin-bottom:8px">📈 Раст по 5 дена</h3>
-      <div style="background:rgba(0,0,0,0.3);border-radius:12px;padding:12px;margin-bottom:18px">
-        ${p.trend.map(t => {
-          const maxP = p.trend[p.trend.length-1].players;
-          return `
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-              <span style="width:40px;font-size:11px;color:rgba(255,248,231,0.5)">Ден ${t.day}</span>
-              <div style="flex:1" class="ac-bar-bg">
-                <div class="ac-bar-fill" style="background:linear-gradient(90deg,#a855f7,#FFD700);width:${(t.players/maxP*100).toFixed(1)}%"></div>
-              </div>
-              <span style="width:60px;text-align:right;font-size:11px;color:#FFD700;font-weight:bold">${t.players}</span>
-              <span style="width:70px;text-align:right;font-size:11px;color:#22c55e;font-weight:bold">$${t.revenue}</span>
-            </div>
-          `;
-        }).join('')}
-      </div>
-
-      <!-- AI Recommendations -->
-      <h3 style="color:#3b82f6;font-size:14px;margin-bottom:8px">🤖 AI Препораки (по приоритет)</h3>
-      <div>
-        ${p.recommendations.map(r => {
-          const priorityColors = {
-            HIGH: { bg: 'rgba(239,68,68,0.1)', color: '#ef4444' },
-            MEDIUM: { bg: 'rgba(245,158,11,0.1)', color: '#f59e0b' },
-            LOW: { bg: 'rgba(34,197,94,0.1)', color: '#22c55e' },
-          };
-          const pc = priorityColors[r.priority];
-          return `
-            <div style="background:${pc.bg};border:1px solid ${pc.color}40;border-radius:10px;padding:12px;margin-bottom:6px;display:flex;align-items:center;gap:10px">
-              <span style="font-size:22px">${r.icon}</span>
-              <div style="flex:1">
-                <span style="background:${pc.color};color:black;font-size:10px;padding:2px 8px;border-radius:8px;font-weight:bold">${r.priority}</span>
-                <p style="margin-top:4px;font-size:13px;color:#FFF8E7;line-height:1.4">${r.text}</p>
-              </div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-
-      <p style="margin-top:14px;color:rgba(255,248,231,0.4);font-size:11px;font-style:italic;text-align:center">
-        💡 Предвидувачот користи historical data + индустриски benchmarks за PWA образовни игри. Confidence интервал: ${(p.confidence*100).toFixed(0)}%
-      </p>
-    `;
-  },
-
-  switchTab(tabId) {
-    document.querySelectorAll('.ac-tab-content').forEach(t => t.style.display = 'none');
-    document.querySelectorAll('.ac-tab').forEach(t => t.classList.remove('active'));
-    const content = document.getElementById('ac-tab-' + tabId);
-    const tab = document.querySelector(`.ac-tab[data-tab="${tabId}"]`);
-    if (content) content.style.display = 'block';
-    if (tab) tab.classList.add('active');
-  },
-
-  // ============================================================
-  // TOAST HELPER
-  // ============================================================
-  toast(msg) {
-    let toast = document.getElementById('ac-toast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.id = 'ac-toast';
-      toast.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(150px);background:linear-gradient(135deg,#a855f7,#ec4899);color:white;padding:14px 24px;border-radius:24px;box-shadow:0 10px 40px rgba(168,85,247,0.5);z-index:10000;font-family:Inter,sans-serif;font-weight:500;font-size:13px;transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);max-width:90vw';
-      document.body.appendChild(toast);
-    }
-    toast.textContent = msg;
-    toast.style.transform = 'translateX(-50%) translateY(0)';
-    clearTimeout(this._toastTimer);
-    this._toastTimer = setTimeout(() => {
-      toast.style.transform = 'translateX(-50%) translateY(150px)';
-    }, 3500);
-  },
-
-  // ============================================================
-  // INIT
-  // ============================================================
-  init() {
-    console.log('[AnalyticsCenter] Mega Analytics Center initialized · 7 sections · email: aleksandarmakedonskigame@gmail.com');
-    return this;
-  },
-};
-
-// Auto-init
-if (typeof window !== 'undefined') {
-  window.AnalyticsCenter = AnalyticsCenter;
-  if (document.readyState !== 'loading') AnalyticsCenter.init();
-  else document.addEventListener('DOMContentLoaded', () => AnalyticsCenter.init());
+/* Safe-area support (iPhone notch, Android camera) */
+body{
+  padding-left:env(safe-area-inset-left);
+  padding-right:env(safe-area-inset-right);
+  padding-top:env(safe-area-inset-top);
+  padding-bottom:env(safe-area-inset-bottom);
 }
+
+/* Prevent text selection on UI (game-like feel) */
+button, .game-btn, .game-btn-sm, .level-dot, .social-btn {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Bigger tap targets on mobile (44x44 minimum per Apple HIG) */
+@media (max-width: 768px) {
+  .game-btn-sm { min-height: 44px; font-size: 0.8rem; padding: 0.6rem 0.8rem; }
+  .game-btn { min-height: 52px; font-size: 1.05rem; padding: 0.9rem 1.5rem; }
+  .level-dot { width: 56px; height: 56px; }
+  h1 { font-size: 2rem !important; line-height: 1.2; }
+  h2 { font-size: 1.5rem !important; }
+  .social-btn { padding: 0.5rem; font-size: 0.65rem; }
+
+  /* Adjust grid spacing */
+  .grid { gap: 0.5rem !important; }
+
+  /* Make game canvas use full width on phones */
+  #game-container { aspect-ratio: 16/10; }
+}
+
+/* iPhone-specific (small) */
+@media (max-width: 380px) {
+  h1 { font-size: 1.6rem !important; }
+  .game-btn-sm { font-size: 0.72rem; padding: 0.55rem 0.65rem; }
+}
+
+/* iPad / Tablet — middle ground */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .max-w-md { max-width: 32rem; }
+  #game-container { aspect-ratio: 16/9; }
+}
+
+/* Desktop — make sure game doesn't get too wide */
+@media (min-width: 1025px) {
+  #game-container { aspect-ratio: 16/9; max-width: 1100px; margin: 0 auto; }
+}
+
+/* Landscape mobile — give game more room */
+@media (orientation: landscape) and (max-width: 900px) {
+  body { font-size: 14px; }
+  .min-h-screen { min-height: 100dvh; }
+  #screen-game { padding: 0.5rem !important; }
+}
+
+/* PWA standalone mode — hide browser-only UI */
+@media all and (display-mode: standalone) {
+  body { background: #0F0C18; }
+  /* Add subtle indicator that you're in PWA mode */
+  .pwa-only { display: block !important; }
+}
+.pwa-only { display: none; }
+
+/* On-screen mobile controls (D-pad + jump button) */
+#mobile-controls {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  pointer-events: none;
+  z-index: 100;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+#mobile-controls.active { display: flex; }
+.touch-btn {
+  pointer-events: auto;
+  background: rgba(255, 215, 0, 0.25);
+  border: 2px solid rgba(255, 215, 0, 0.5);
+  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: #FFD700;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  font-weight: bold;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  transition: transform 0.1s, background 0.1s;
+}
+.touch-btn:active, .touch-btn.pressed {
+  background: rgba(255, 215, 0, 0.55);
+  transform: scale(0.92);
+}
+#touch-jump {
+  width: 84px;
+  height: 84px;
+  font-size: 20px;
+  background: rgba(74, 144, 226, 0.35);
+  border-color: rgba(74, 144, 226, 0.6);
+  color: #4A90E2;
+}
+.touch-dpad {
+  display: flex;
+  gap: 0.6rem;
+}
+
+/* Show touch controls on touch devices when in game */
+@media (hover: none) and (pointer: coarse) {
+  #screen-game.active ~ #mobile-controls,
+  #screen-game.active #mobile-controls { display: flex; }
+}
+
+/* Install button (appears when PWA can be installed) */
+#pwa-install-btn {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #0F0C18;
+  padding: 12px 20px;
+  border-radius: 9999px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+  z-index: 1000;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  animation: pulse-glow 2s infinite;
+}
+#pwa-install-btn.show { display: flex; }
+
+/* Improve scroll on mobile */
+* { -webkit-overflow-scrolling: touch; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- =================================================== -->
+<!-- 🚨 FILE:// PROTOCOL DETECTOR — pomaga ako se otvora direktno -->
+<!-- =================================================== -->
+<script>
+(function() {
+  if (window.location.protocol === 'file:') {
+    // Show big friendly warning instead of broken UI
+    document.addEventListener('DOMContentLoaded', function() {
+      document.body.innerHTML = `
+        <div style="min-height:100vh;background:linear-gradient(135deg,#1A1525,#0F0C18);display:flex;align-items:center;justify-content:center;padding:20px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#FFF8E7">
+          <div style="max-width:600px;background:rgba(255,215,0,0.05);border:2px solid #FFD700;border-radius:24px;padding:40px;text-align:center;box-shadow:0 0 60px rgba(255,215,0,0.2)">
+            <div style="font-size:80px;margin-bottom:20px">👑</div>
+            <h1 style="font-size:28px;margin-bottom:10px;color:#FFD700">Мисија на Александар</h1>
+            <p style="color:#FFA500;font-size:14px;margin-bottom:30px">Патот на Светлината — v5.0</p>
+
+            <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.4);border-radius:12px;padding:20px;margin-bottom:24px;text-align:left">
+              <p style="color:#ef4444;font-weight:bold;margin-bottom:8px">⚠️ Играта не може да тргне со двоен клик на index.html</p>
+              <p style="color:#FFF8E7;font-size:14px;opacity:0.9;line-height:1.5">Browser-от ги блокира надворешните CDN-и (Tailwind, Phaser, фонтови) кога играта се отвора преку <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px">file://</code> протокол. Тоа е безбедносна заштита, не грешка на играта.</p>
+            </div>
+
+            <h2 style="color:#FFD700;font-size:18px;margin-bottom:16px">🚀 3 РЕШЕНИЈА:</h2>
+
+            <div style="text-align:left;margin-bottom:16px">
+              <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.4);border-radius:10px;padding:16px;margin-bottom:12px">
+                <p style="color:#22c55e;font-weight:bold;margin-bottom:6px">✅ ОПЦИЈА 1: Користи го launcher-от (НАЈЛЕСНО)</p>
+                <p style="color:#FFF8E7;font-size:13px;opacity:0.85">
+                  <b>Windows:</b> Двоен клик на <code style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px">PUSHI_ME.bat</code><br>
+                  <b>Mac/Linux:</b> Отвори terminal во оваа папка, напиши: <code style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px">bash pushi_me.sh</code>
+                </p>
+              </div>
+
+              <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.4);border-radius:10px;padding:16px;margin-bottom:12px">
+                <p style="color:#3b82f6;font-weight:bold;margin-bottom:6px">🌐 ОПЦИЈА 2: Качи на GitHub Pages (БЕСПЛАТНО)</p>
+                <p style="color:#FFF8E7;font-size:13px;opacity:0.85">
+                  1. Нов repo на github.com<br>
+                  2. Качи ги сите фајлови<br>
+                  3. Settings → Pages → main branch → Save<br>
+                  Играта е онлајн за 60 секунди!
+                </p>
+              </div>
+
+              <div style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.4);border-radius:10px;padding:16px">
+                <p style="color:#a855f7;font-weight:bold;margin-bottom:6px">⚡ ОПЦИЈА 3: Drag &amp; Drop на Netlify (30 секунди)</p>
+                <p style="color:#FFF8E7;font-size:13px;opacity:0.85">
+                  Отвори <a href="https://app.netlify.com/drop" style="color:#a855f7;text-decoration:underline" target="_blank">https://app.netlify.com/drop</a><br>
+                  Drag-and-drop ja целата папка → готово, имаш URL!
+                </p>
+              </div>
+            </div>
+
+            <p style="color:#FFF8E7;opacity:0.5;font-size:12px;margin-top:30px;font-style:italic">"Светот е книга, а оние кои патуваат читаат повеќе страници."</p>
+            <p style="color:#FFD700;opacity:0.6;font-size:11px;margin-top:8px">World Protocol Academy · aleksandarmakedonskigame@gmail.com</p>
+          </div>
+        </div>`;
+    });
+    return; // Stop further script execution
+  }
+})();
+</script>
+
+<!-- Particles Background -->
+<div id="particles-bg" style="position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden"></div>
+
+<!-- ========== MAIN MENU ========== -->
+<div id="screen-menu" class="screen active min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
+  <div class="max-w-md w-full text-center">
+    <!-- User Badge -->
+    <div id="user-badge" class="absolute top-4 right-4 flex items-center gap-2 bg-white/5 border border-yellow-600/30 rounded-full px-3 py-1.5 text-sm">
+      <i data-lucide="user" class="w-4 h-4 text-yellow-400"></i>
+      <span id="player-name" class="text-yellow-400">Гостин</span>
+    </div>
+
+    <!-- Title -->
+    <div class="mb-8">
+      <div class="flex justify-center mb-3">
+        <i data-lucide="crown" class="w-14 h-14 text-yellow-400" style="filter:drop-shadow(0 0 20px rgba(255,215,0,.4))"></i>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-cinzel font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-500 mb-2">Мисија на Александар</h1>
+      <p class="text-lg text-[#FFF8E7]/70 font-caveat tracking-wider text-xl">Патот на Светлината</p>
+      <p class="text-xs text-[#FFF8E7]/40 mt-2 flex items-center justify-center gap-2">
+        <i data-lucide="sparkles" class="w-3 h-3"></i>
+        37 Нивоа | 4 AI Агенти | Најевтина на Светот
+        <i data-lucide="sparkles" class="w-3 h-3"></i>
+      </p>
+    </div>
+
+    <!-- Main Play Button -->
+    <button onclick="startGame()" class="game-btn w-full mb-6 py-4 text-xl flex items-center justify-center gap-3" style="animation:pulse-glow 2s infinite">
+      <i data-lucide="play" class="w-6 h-6"></i>
+      Играј Сега!
+      <i data-lucide="chevron-right" class="w-5 h-5"></i>
+    </button>
+
+    <!-- Stats Row -->
+    <div id="menu-stats" class="flex justify-center gap-6 mb-6 text-sm hidden">
+      <div class="text-center">
+        <span id="stat-level" class="text-yellow-400 font-bold text-lg block">1</span>
+        <span class="text-[#FFF8E7]/50 text-xs">Ниво</span>
+      </div>
+      <div class="text-center">
+        <span id="stat-coins" class="text-yellow-400 font-bold text-lg block">0</span>
+        <span class="text-[#FFF8E7]/50 text-xs">Монети</span>
+      </div>
+      <div class="text-center">
+        <span id="stat-stars" class="text-yellow-400 font-bold text-lg block">0</span>
+        <span class="text-[#FFF8E7]/50 text-xs">Ѕвезди</span>
+      </div>
+    </div>
+
+    <!-- Menu Grid -->
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <button onclick="showScreen('levels')" class="game-btn-sm justify-center py-3">
+        <i data-lucide="map" class="w-4 h-4"></i> Избери Ниво
+      </button>
+      <button onclick="showScreen('leaderboard')" class="game-btn-sm justify-center py-3">
+        <i data-lucide="trophy" class="w-4 h-4"></i> Табела
+      </button>
+      <button onclick="showScreen('museum')" class="game-btn-sm justify-center py-3">
+        <i data-lucide="book-open" class="w-4 h-4"></i> Дворец на Знаење
+      </button>
+      <button onclick="showScreen('rewards')" class="game-btn-sm justify-center py-3">
+        <i data-lucide="gift" class="w-4 h-4"></i> Награди
+      </button>
+      <button onclick="showScreen('shop')" class="game-btn-sm justify-center py-3">
+        <i data-lucide="shopping-bag" class="w-4 h-4"></i> Продавница
+      </button>
+      <button onclick="showScreen('ai')" class="game-btn-sm justify-center py-3">
+        <i data-lucide="bot" class="w-4 h-4"></i> AI Помошници
+      </button>
+      <button onclick="showScreen('settings')" class="game-btn-sm justify-center py-3">
+        <i data-lucide="settings" class="w-4 h-4"></i> Поставки
+      </button>
+      <button onclick="showDailyBonus()" class="game-btn-sm justify-center py-3">
+        <i data-lucide="flame" class="w-4 h-4"></i> Дневен Бонус
+      </button>
+      <button onclick="showScreen('income');renderIncomeScreen();" class="game-btn-sm justify-center py-3" style="background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(20,184,166,.15));border-color:rgba(34,197,94,.4);color:#4ade80;">
+        <i data-lucide="trending-up" class="w-4 h-4"></i> 💰 Пасивни Приходи
+      </button>
+      <button onclick="showAdGiants()" class="game-btn-sm justify-center py-3" style="background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(236,72,153,.15));border-color:rgba(168,85,247,.4);color:#c084fc;">
+        <i data-lucide="radio-tower" class="w-4 h-4"></i> 🌍 Ad Giganti
+      </button>
+      <button onclick="showScreen('companions');renderCompanions();" class="game-btn-sm justify-center py-3" style="background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(147,51,234,.15));border-color:rgba(59,130,246,.4);color:#60a5fa;">
+        <i data-lucide="shield" class="w-4 h-4"></i> 🐴 Камаради
+      </button>
+      <button onclick="showKingdom()" class="game-btn-sm justify-center py-3" style="background:linear-gradient(135deg,rgba(234,179,8,.15),rgba(249,115,22,.15));border-color:rgba(234,179,8,.4);color:#fbbf24;">
+        <i data-lucide="castle" class="w-4 h-4"></i> 🏛️ Александрија
+      </button>
+      <button onclick="Legacy.showCapsule()" class="game-btn-sm justify-center py-3 col-span-2" style="background:linear-gradient(135deg,rgba(236,72,153,.2),rgba(168,85,247,.2),rgba(59,130,246,.2));border:1px solid rgba(236,72,153,.5);color:#f0abfc;animation:pulse-glow 3s infinite">
+        <i data-lucide="sparkles" class="w-4 h-4"></i> ✨ Тестамент-Капсула (СВЕТСКА УНИКАТНА)
+      </button>
+      <button onclick="if(window.MagicTracking) MagicTracking.renderMagicDashboard(); else alert('Се вчитува... Пробај повторно!');" class="game-btn-sm justify-center py-3 col-span-2" style="background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(236,72,153,.2),rgba(255,165,0,.2));border-color:rgba(168,85,247,.5);color:#d8b4fe;">
+        <i data-lucide="eye" class="w-4 h-4"></i> 👁️ Magic Tracking (Аналитика)
+      </button>
+      <button onclick="if(window.Integrations) Integrations.renderSocialHub(); else alert('Се вчитува...');" class="game-btn-sm justify-center py-3 col-span-2" style="background:linear-gradient(135deg,rgba(34,197,94,.2),rgba(59,130,246,.2),rgba(168,85,247,.2));border-color:rgba(34,197,94,.5);color:#4ade80;">
+        <i data-lucide="share-2" class="w-4 h-4"></i> 🌐 Поврзи се (Социјални + Месинџери)
+      </button>
+      <button onclick="if(window.AnalyticsCenter) AnalyticsCenter.show(); else alert('Се вчитува...');" class="game-btn-sm justify-center py-3 col-span-2" style="background:linear-gradient(135deg,rgba(168,85,247,.25),rgba(236,72,153,.2),rgba(255,165,0,.2));border:1.5px solid rgba(168,85,247,.6);color:#d8b4fe;font-weight:700;animation:pulse-glow 3s infinite">
+        <i data-lucide="bar-chart-3" class="w-4 h-4"></i> 📊 MEGA Аналитички Центар
+      </button>
+    </div>
+
+    <!-- Social Share Row -->
+    <div class="flex justify-center gap-3 mt-4">
+      <button onclick="shareSocial('facebook')" class="p-2 bg-blue-600/30 rounded-full hover:bg-blue-600/50 transition-all" title="Facebook">
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" class="text-blue-400"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+      </button>
+      <button onclick="shareSocial('whatsapp')" class="p-2 bg-green-600/30 rounded-full hover:bg-green-600/50 transition-all" title="WhatsApp">
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" class="text-green-400"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      </button>
+      <button onclick="shareSocial('twitter')" class="p-2 bg-gray-800/50 rounded-full hover:bg-gray-700/50 transition-all border border-white/10" title="Twitter/X">
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" class="text-white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </button>
+      <button onclick="shareSocial('telegram')" class="p-2 bg-blue-500/30 rounded-full hover:bg-blue-500/50 transition-all" title="Telegram">
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" class="text-blue-400"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+      </button>
+      <button onclick="shareSocial('viber')" class="p-2 bg-purple-600/30 rounded-full hover:bg-purple-600/50 transition-all" title="Viber">
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24" class="text-purple-400"><path d="M12.677 0C5.677 0 .007 5.077 0 11.422c0 2.058.583 4.003 1.597 5.634L.508 23.493l6.61-1.69a11.74 11.74 0 005.559 1.395h.006c6.996 0 12.664-5.077 12.67-11.422C25.346 5.078 19.674 0 12.677 0zm8.578 16.476c-.37 1.043-2.04 1.913-2.83 2.01-.75.093-1.43.374-4.79-.987-4.06-1.637-6.648-5.857-6.85-6.12-.196-.268-1.633-2.177-1.633-4.152 0-1.975 1.038-2.94 1.406-3.345.37-.402.8-.503 1.067-.503.254 0 .507 0 .73.01.24.013.55-.09.86.657.31.753 1.063 2.61 1.156 2.796.093.187.155.405.032.654-.123.248-.187.402-.37.618-.187.214-.39.45-.556.606-.186.172-.378.36-.272.708.107.347.504 1.66 2.418 2.688 1.637.874 2.233.774 2.688.564.45-.213.713-.338.998.153.287.49 1.11 1.995 1.263 2.28.154.285.045.544-.09.73-.123.167-.287.434-.43.653z"/></svg>
+      </button>
+      <button onclick="copyShareLink()" class="p-2 bg-yellow-500/20 rounded-full hover:bg-yellow-500/40 transition-all border border-yellow-500/30" title="Копирај линк">
+        <i data-lucide="link" class="w-4 h-4 text-yellow-400"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== GAME SCREEN ========== -->
+<div id="screen-game" class="screen min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
+  <div class="w-full max-w-4xl">
+    <!-- Top Bar -->
+    <div class="flex items-center justify-between mb-4">
+      <button onclick="showScreen('menu')" class="game-btn-sm">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Мени
+      </button>
+      <div class="flex items-center gap-4 text-sm">
+        <span class="text-yellow-400 flex items-center gap-1"><i data-lucide="coins" class="w-4 h-4"></i> <span id="hud-coins">0</span></span>
+        <span class="text-orange-400 flex items-center gap-1"><i data-lucide="scroll" class="w-4 h-4"></i> <span id="hud-scrolls">0</span></span>
+        <span id="companion-hud" class="hidden flex items-center gap-1 bg-blue-500/20 border border-blue-500/30 rounded-full px-2 py-0.5"></span>
+      </div>
+      <span class="text-[#FFF8E7]/60 text-sm">Ниво <span id="hud-level">1</span> / 37</span>
+    </div>
+
+    <!-- Game Canvas -->
+    <div id="game-container" class="rounded-xl overflow-hidden border-2 border-yellow-600/50 shadow-2xl" style="aspect-ratio:8/5"></div>
+
+    <!-- Level Info -->
+    <div class="mt-4 text-center text-[#FFF8E7]/40 text-xs">
+      Епизода <span id="hud-episode">1</span> |
+      <span id="hud-episode-name">Кралскиот Пат</span>
+    </div>
+  </div>
+</div>
+
+<!-- ========== LEVEL SELECT ========== -->
+<div id="screen-levels" class="screen min-h-screen p-4 md:p-8 relative z-10">
+  <div class="max-w-4xl mx-auto">
+    <button onclick="showScreen('menu')" class="game-btn-sm mb-4">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Назад
+    </button>
+    <h2 class="text-3xl font-cinzel font-bold text-yellow-400 mb-1">Избери Пат</h2>
+    <p class="text-[#FFF8E7]/60 text-sm mb-6">37 Нивоа - 3 Епизоди</p>
+
+    <div id="episodes-container" class="space-y-6"></div>
+  </div>
+</div>
+
+<!-- ========== LEADERBOARD ========== -->
+<div id="screen-leaderboard" class="screen min-h-screen p-4 md:p-8 relative z-10">
+  <div class="max-w-2xl mx-auto">
+    <button onclick="showScreen('menu')" class="game-btn-sm mb-4">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Назад
+    </button>
+    <div class="text-center mb-8">
+      <i data-lucide="trophy" class="w-10 h-10 text-yellow-400 mx-auto mb-2"></i>
+      <h2 class="text-3xl font-cinzel font-bold text-yellow-400">Табела на Резултати</h2>
+    </div>
+    <div id="leaderboard-list" class="space-y-2"></div>
+  </div>
+</div>
+
+<!-- ========== MUSEUM ========== -->
+<div id="screen-museum" class="screen min-h-screen p-4 md:p-8 relative z-10">
+  <div class="max-w-3xl mx-auto">
+    <button onclick="showScreen('menu')" class="game-btn-sm mb-4">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Назад
+    </button>
+    <div class="text-center mb-8">
+      <i data-lucide="book-open" class="w-10 h-10 text-yellow-400 mx-auto mb-2"></i>
+      <h2 class="text-3xl font-cinzel font-bold text-yellow-400">Дворец на Знаењето</h2>
+      <p class="text-[#FFF8E7]/60 text-sm mt-1"><span id="museum-count">0</span> / 37 Пронајдени</p>
+    </div>
+    <div id="museum-scrolls" class="space-y-3"></div>
+  </div>
+</div>
+
+<!-- ========== REWARDS ========== -->
+<div id="screen-rewards" class="screen min-h-screen p-4 md:p-8 relative z-10">
+  <div class="max-w-2xl mx-auto">
+    <button onclick="showScreen('menu')" class="game-btn-sm mb-4">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Назад
+    </button>
+    <div class="text-center mb-8">
+      <i data-lucide="gift" class="w-10 h-10 text-yellow-400 mx-auto mb-2"></i>
+      <h2 class="text-3xl font-cinzel font-bold text-yellow-400">Легендарни Награди</h2>
+    </div>
+    <div class="space-y-4">
+      <div id="reward-12" class="reward-item flex items-center gap-6 p-6 rounded-2xl border-2 border-yellow-600/30 bg-white/5">
+        <span class="text-5xl">👑</span>
+        <div>
+          <h3 class="font-bold text-lg text-yellow-400">Круна на Мудроста</h3>
+          <p class="text-sm text-[#FFF8E7]/60">Отклучи на Ниво 12</p>
+          <span id="badge-12" class="inline-block mt-2 px-3 py-1 bg-gray-600/30 text-gray-400 text-xs rounded-full">🔒 Заклучено</span>
+        </div>
+      </div>
+      <div id="reward-24" class="reward-item flex items-center gap-6 p-6 rounded-2xl border-2 border-yellow-600/30 bg-white/5">
+        <span class="text-5xl">🪽</span>
+        <div>
+          <h3 class="font-bold text-lg text-yellow-400">Крилја на Единството</h3>
+          <p class="text-sm text-[#FFF8E7]/60">Отклучи на Ниво 24</p>
+          <span id="badge-24" class="inline-block mt-2 px-3 py-1 bg-gray-600/30 text-gray-400 text-xs rounded-full">🔒 Заклучено</span>
+        </div>
+      </div>
+      <div id="reward-37" class="reward-item flex items-center gap-6 p-6 rounded-2xl border-2 border-yellow-600/30 bg-white/5">
+        <span class="text-5xl">🏆</span>
+        <div>
+          <h3 class="font-bold text-lg text-yellow-400">Светилник на Вечна Светлина</h3>
+          <p class="text-sm text-[#FFF8E7]/60">Отклучи на Ниво 37 - Финале!</p>
+          <span id="badge-37" class="inline-block mt-2 px-3 py-1 bg-gray-600/30 text-gray-400 text-xs rounded-full">🔒 Заклучено</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SHOP ========== -->
+<div id="screen-shop" class="screen min-h-screen p-4 md:p-8 relative z-10">
+  <div class="max-w-lg mx-auto">
+    <button onclick="showScreen('menu')" class="game-btn-sm mb-4">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Назад
+    </button>
+    <div class="text-center mb-6">
+      <i data-lucide="shopping-bag" class="w-10 h-10 text-yellow-400 mx-auto mb-2"></i>
+      <h2 class="text-3xl font-cinzel font-bold text-yellow-400">Продавница</h2>
+      <p class="text-xs text-[#FFF8E7]/40 mt-1">Најевтини цени на светот! | aleksandarmakedonskigame@gmail.com</p>
+    </div>
+    <div class="space-y-3">
+      <div onclick="buyProduct('premium', 99)" class="flex items-center gap-4 p-4 rounded-xl border-2 border-white/10 bg-white/5 hover:border-yellow-500/60 cursor-pointer transition-all">
+        <span class="text-4xl">👑</span>
+        <div class="flex-1">
+          <p class="text-[#FFF8E7] font-bold">Премиум Пакет</p>
+          <p class="text-[#FFF8E7]/50 text-sm">Сите нивоа + бонус содржина</p>
+        </div>
+        <span class="text-yellow-400 font-bold text-xl">$0.99</span>
+      </div>
+      <div onclick="buyProduct('coins', 49)" class="flex items-center gap-4 p-4 rounded-xl border-2 border-white/10 bg-white/5 hover:border-yellow-500/60 cursor-pointer transition-all">
+        <span class="text-4xl">🪙</span>
+        <div class="flex-1">
+          <p class="text-[#FFF8E7] font-bold">500 Монети</p>
+          <p class="text-[#FFF8E7]/50 text-sm">Златни монети за играње</p>
+        </div>
+        <span class="text-yellow-400 font-bold text-xl">$0.49</span>
+      </div>
+      <div onclick="buyProduct('lives', 29)" class="flex items-center gap-4 p-4 rounded-xl border-2 border-white/10 bg-white/5 hover:border-yellow-500/60 cursor-pointer transition-all">
+        <span class="text-4xl">❤️</span>
+        <div class="flex-1">
+          <p class="text-[#FFF8E7] font-bold">Беспределни Животи</p>
+          <p class="text-[#FFF8E7]/50 text-sm">24 часа беспределни животи</p>
+        </div>
+        <span class="text-yellow-400 font-bold text-xl">$0.29</span>
+      </div>
+      <div onclick="buyProduct('season', 199)" class="flex items-center gap-4 p-4 rounded-xl border-2 border-white/10 bg-white/5 hover:border-yellow-500/60 cursor-pointer transition-all">
+        <span class="text-4xl">🎫</span>
+        <div class="flex-1">
+          <p class="text-[#FFF8E7] font-bold">Сезонска Картичка</p>
+          <p class="text-[#FFF8E7]/50 text-sm">Сите сегашни + идни епизоди</p>
+        </div>
+        <span class="text-yellow-400 font-bold text-xl">$1.99</span>
+      </div>
+    </div>
+    <p class="text-center text-[#FFF8E7]/30 text-xs mt-4">Сите плаќања се безбедни и енкриптирани</p>
+  </div>
+</div>
+
+<!-- ========== AI ASSISTANTS ========== -->
+<div id="screen-ai" class="screen min-h-screen p-4 md:p-8 relative z-10">
+  <div class="max-w-lg mx-auto">
+    <button onclick="showScreen('menu')" class="game-btn-sm mb-4">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Назад
+    </button>
+    <div class="text-center mb-4">
+      <i data-lucide="bot" class="w-10 h-10 text-yellow-400 mx-auto mb-2"></i>
+      <h2 class="text-3xl font-cinzel font-bold text-yellow-400">AI Помошници</h2>
+      <p class="text-sm text-[#FFF8E7]/60">4 уникатни агента за твојата авантура</p>
+    </div>
+
+    <!-- Agent Selector -->
+    <div class="flex gap-2 mb-4">
+      <button onclick="selectAgent('kimi')" id="agent-btn-kimi" class="flex-1 py-2 rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-400 text-sm font-medium transition-all hover:bg-blue-500/20">🧭 Кими</button>
+      <button onclick="selectAgent('gpt')" id="agent-btn-gpt" class="flex-1 py-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 text-sm font-medium transition-all hover:bg-yellow-500/20">🎓 GPT</button>
+      <button onclick="selectAgent('claude')" id="agent-btn-claude" class="flex-1 py-2 rounded-lg border border-purple-500/30 bg-purple-500/10 text-purple-400 text-sm font-medium transition-all hover:bg-purple-500/20">🧩 Клод</button>
+      <button onclick="selectAgent('harvey')" id="agent-btn-harvey" class="flex-1 py-2 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 text-sm font-medium transition-all hover:bg-red-500/20">⚡ Харви</button>
+    </div>
+
+    <!-- Agent Info -->
+    <div id="agent-info" class="p-4 rounded-xl bg-white/5 border border-white/10 mb-4">
+      <p id="agent-desc" class="text-sm text-[#FFF8E7]/70">Избери агент погоре...</p>
+    </div>
+
+    <!-- Chat Area -->
+    <div id="ai-chat-area" class="h-64 overflow-y-auto p-3 rounded-xl bg-black/30 border border-white/10 mb-3"></div>
+
+    <!-- Input -->
+    <div class="flex gap-2">
+      <input id="ai-input" type="text" placeholder="Прашај ме било што..." 
+        class="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-[#FFF8E7] placeholder:text-[#FFF8E7]/30 focus:outline-none focus:border-yellow-500/50"
+        onkeydown="if(event.key==='Enter')sendAIMessage()">
+      <button onclick="sendAIMessage()" class="p-2 bg-yellow-500 text-[#0F0C18] rounded-lg hover:bg-yellow-400 transition-all">
+        <i data-lucide="send" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SETTINGS ========== -->
+<div id="screen-settings" class="screen min-h-screen p-4 md:p-8 relative z-10">
+  <div class="max-w-md mx-auto">
+    <button onclick="showScreen('menu')" class="game-btn-sm mb-4">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Назад
+    </button>
+    <h2 class="text-3xl font-cinzel font-bold text-yellow-400 mb-6">Поставки</h2>
+
+    <div class="space-y-4">
+      <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+        <span class="flex items-center gap-2"><i data-lucide="volume-2" class="w-5 h-5 text-yellow-400"></i> Звук</span>
+        <button id="toggle-sound" onclick="toggleSetting('sound')" class="w-12 h-6 rounded-full bg-yellow-500 relative transition-all">
+          <div class="absolute top-1 right-1 w-4 h-4 bg-white rounded-full transition-all"></div>
+        </button>
+      </div>
+      <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+        <span class="flex items-center gap-2"><i data-lucide="music" class="w-5 h-5 text-yellow-400"></i> Музика</span>
+        <button id="toggle-music" onclick="toggleSetting('music')" class="w-12 h-6 rounded-full bg-yellow-500 relative transition-all">
+          <div class="absolute top-1 right-1 w-4 h-4 bg-white rounded-full transition-all"></div>
+        </button>
+      </div>
+
+      <div class="border-t border-white/10 pt-4">
+        <p class="text-sm text-[#FFF8E7]/60 mb-3 flex items-center gap-2"><i data-lucide="globe" class="w-4 h-4 text-yellow-400"></i> Јазик</p>
+        <div class="flex gap-3">
+          <button onclick="setLang('mk')" id="lang-mk" class="flex-1 py-2 rounded-lg border-2 border-yellow-500 bg-yellow-500/10 text-yellow-400 text-sm font-medium">🇲🇰 Македонски</button>
+          <button onclick="setLang('en')" id="lang-en" class="flex-1 py-2 rounded-lg border-2 border-white/10 text-[#FFF8E7]/50 text-sm font-medium hover:border-yellow-600/40">🇬🇧 English</button>
+        </div>
+      </div>
+
+      <div class="border-t border-white/10 pt-4">
+        <button onclick="resetProgress()" class="w-full flex items-center justify-center gap-2 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all text-sm">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Ресетирај Прогрес
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODALS ========== -->
+
+<!-- Level Complete Modal -->
+<div id="modal-complete" class="hidden fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4">
+  <div class="bg-gradient-to-b from-[#1A1525] to-[#2D1B69] border-2 border-yellow-500/50 rounded-2xl p-8 text-center max-w-sm w-full relative overflow-hidden">
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-yellow-500/10 rounded-full blur-3xl"></div>
+    <h3 class="text-3xl font-cinzel font-bold text-yellow-400 mb-2">Патот е Освоен!</h3>
+    <p class="text-[#FFF8E7]/60 mb-4">Ниво <span id="complete-level">1</span></p>
+
+    <!-- Stars -->
+    <div class="flex justify-center gap-2 mb-4" id="complete-stars"></div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 gap-3 mb-6 text-sm">
+      <div class="bg-black/30 rounded-lg p-3">
+        <p id="complete-coins" class="text-yellow-400 font-bold text-lg">0</p>
+        <p class="text-[#FFF8E7]/50 text-xs">Монети</p>
+      </div>
+      <div class="bg-black/30 rounded-lg p-3">
+        <p id="complete-scrolls" class="text-orange-400 font-bold text-lg">0</p>
+        <p class="text-[#FFF8E7]/50 text-xs">Свитоци</p>
+      </div>
+      <div class="bg-black/30 rounded-lg p-3">
+        <p id="complete-time" class="text-blue-400 font-bold text-lg">0s</p>
+        <p class="text-[#FFF8E7]/50 text-xs">Време</p>
+      </div>
+      <div class="bg-black/30 rounded-lg p-3">
+        <p id="complete-score" class="text-green-400 font-bold text-lg">0</p>
+        <p class="text-[#FFF8E7]/50 text-xs">Резултат</p>
+      </div>
+    </div>
+
+    <div class="space-y-2">
+      <button onclick="nextLevel()" class="game-btn w-full py-3">Следно Ниво</button>
+      <button onclick="retryLevel()" class="w-full py-2 bg-yellow-500/10 text-yellow-400 rounded-full hover:bg-yellow-500/20 transition-all text-sm">Играј Повторно</button>
+      <button onclick="closeModal('modal-complete');showScreen('menu')" class="w-full py-2 text-[#FFF8E7]/50 hover:text-[#FFF8E7] transition-all text-sm">Мени</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scroll Fact Modal -->
+<div id="modal-fact" class="hidden fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#2D1B69] border border-yellow-500/50 rounded-xl px-6 py-3 max-w-md text-center animate-bounce">
+  <p class="text-yellow-400 text-xs font-bold mb-1">Дали знаеше?</p>
+  <p id="fact-text" class="text-white text-sm"></p>
+</div>
+
+<!-- Daily Bonus Modal -->
+<div id="modal-bonus" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+  <div class="bg-gradient-to-b from-[#0F0C18] to-[#2D1B69] border-2 border-yellow-500/50 rounded-2xl max-w-sm w-full p-6 text-center relative overflow-hidden">
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl"></div>
+    <div class="mb-4">
+      <i data-lucide="gift" class="w-12 h-12 text-yellow-400 mx-auto animate-bounce"></i>
+    </div>
+    <h3 class="text-2xl font-cinzel font-bold text-yellow-400 mb-1">Дневна Награда!</h3>
+    <p class="text-[#FFF8E7]/60 text-sm mb-4">Дневна Серија: <span id="bonus-streak">3</span> дена</p>
+    <div class="bg-white/5 border border-yellow-500/30 rounded-xl p-6 mb-4">
+      <span class="text-4xl block mb-2">🪙</span>
+      <p class="text-3xl font-bold text-yellow-400">+<span id="bonus-amount">50</span></p>
+      <p class="text-[#FFF8E7]/70 text-sm">Златни Монети</p>
+    </div>
+    <button onclick="claimBonus()" class="game-btn w-full py-3">Земи</button>
+    <button onclick="closeModal('modal-bonus')" class="mt-2 text-[#FFF8E7]/40 hover:text-[#FFF8E7] text-sm">Затвори</button>
+  </div>
+</div>
+
+<!-- ========== LEGEND WINNER MODAL ========== -->
+<div id="modal-legend" class="hidden fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4">
+  <div class="bg-gradient-to-b from-[#1A1525] via-[#2D1B69] to-[#1A1525] border-2 border-yellow-500/60 rounded-3xl max-w-md w-full p-8 text-center relative overflow-hidden" style="animation:pulse-glow 2s infinite">
+    <!-- Glow -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-yellow-500/20 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-orange-500/10 rounded-full blur-3xl"></div>
+
+    <!-- Legend Badge -->
+    <div class="relative mb-4">
+      <div class="text-7xl mb-2">🏆</div>
+      <div class="inline-block px-4 py-1 bg-gradient-to-r from-yellow-500/30 to-orange-500/30 border border-yellow-500/50 rounded-full">
+        <span class="text-yellow-400 font-bold text-sm tracking-wider">ЛЕГЕНДА НА СВЕТЛИНАТА</span>
+      </div>
+    </div>
+
+    <h2 class="text-3xl font-cinzel font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-300 to-orange-400 mb-3 relative">
+      Честитки, Херој!
+    </h2>
+    <p class="text-[#FFF8E7]/70 text-sm mb-6 relative">
+      Го освои <strong class="text-yellow-400">37-то ниво</strong> и стана Легенда!<br>
+      Светот на Александар е сега твој!
+    </p>
+
+    <!-- Free Rewards -->
+    <div class="space-y-3 mb-6 relative text-left">
+      <div class="flex items-center gap-3 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+        <span class="text-2xl">👑</span>
+        <div>
+          <p class="text-yellow-400 font-bold text-sm">VIP ПРЕМИУМ - БЕСПЛАТНО!</p>
+          <p class="text-[#FFF8E7]/50 text-xs">Наредни 90 дена - сите нивоа отворени</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-xl">
+        <span class="text-2xl">🎫</span>
+        <div>
+          <p class="text-purple-400 font-bold text-sm">СЕЗОНА 2 - РАН ПРИСТАП!</p>
+          <p class="text-[#FFF8E7]/50 text-xs">Прв/а што ќе ги игра новите нивоа</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+        <span class="text-2xl">🏅</span>
+        <div>
+          <p class="text-blue-400 font-bold text-sm">ЗЛАТЕН ТРОФЕЈ</p>
+          <p class="text-[#FFF8E7]/50 text-xs">Ексклузивен трофеј за легендите</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded-xl">
+        <span class="text-2xl">⚡</span>
+        <div>
+          <p class="text-green-400 font-bold text-sm">БЕСКОНЕЧНИ ЖИВОТИ</p>
+          <p class="text-[#FFF8E7]/50 text-xs">Никогаш повеќе нема да загубиш живот</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Email notification -->
+    <p class="text-[#FFF8E7]/40 text-xs mb-4 relative">
+      📧 Email известување испратено до:<br>
+      <span class="text-yellow-400">aleksandarmakedonskigame@gmail.com</span>
+    </p>
+
+    <button onclick="closeLegend()" class="game-btn w-full py-3 relative text-lg">
+      🎉 Продолжи како ЛЕГЕНДА!
+    </button>
+  </div>
+</div>
+
+<!-- ========== AD GIANTS SCREEN ========== -->
+<div id="screen-adgiants" class="screen min-h-screen p-4 md:p-8 relative z-10">
+  <div class="max-w-4xl mx-auto">
+    <button onclick="showScreen('menu')" class="game-btn-sm mb-4">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Назад
+    </button>
+    <div class="text-center mb-8">
+      <i data-lucide="radio-tower" class="w-12 h-12 text-purple-400 mx-auto mb-2"></i>
+      <h2 class="text-3xl font-cinzel font-bold text-yellow-400">🌍 Ad Giganti</h2>
+      <p class="text-[#FFF8E7]/60 text-sm mt-1">19 глобални рекламни мрежи поврзани</p>
+      <div class="flex justify-center gap-6 mt-3">
+        <div class="bg-black/30 rounded-xl px-4 py-2 border border-purple-600/20">
+          <p id="adgiants-count" class="text-purple-400 font-bold text-xl">19</p>
+          <p class="text-[#FFF8E7]/40 text-xs">Мрежи</p>
+        </div>
+        <div class="bg-black/30 rounded-xl px-4 py-2 border border-yellow-600/20">
+          <p id="adgiants-total" class="text-yellow-400 font-bold text-xl">$0.00</p>
+          <p class="text-[#FFF8E7]/40 text-xs">Вкупно eCPM</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Networks List -->
+    <div id="adgiants-list" class="space-y-2 mb-8"></div>
+
+    <!-- Ad Revenue Info -->
+    <div class="p-4 rounded-xl border border-purple-600/30 bg-gradient-to-r from-purple-500/10 to-pink-500/5">
+      <h3 class="text-lg font-bold text-purple-400 mb-3">📊 Рекламни Приходи</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+        <div class="bg-black/30 rounded-lg p-2 text-center">
+          <p class="text-green-400 font-bold">$0.10-$2</p>
+          <p class="text-[#FFF8E7]/40 text-xs">по клик</p>
+        </div>
+        <div class="bg-black/30 rounded-lg p-2 text-center">
+          <p class="text-blue-400 font-bold">$1-$5</p>
+          <p class="text-[#FFF8E7]/40 text-xs">по 1000 прегледи</p>
+        </div>
+        <div class="bg-black/30 rounded-lg p-2 text-center">
+          <p class="text-yellow-400 font-bold">$3-$8</p>
+          <p class="text-[#FFF8E7]/40 text-xs">Rewarded Video</p>
+        </div>
+        <div class="bg-black/30 rounded-lg p-2 text-center">
+          <p class="text-purple-400 font-bold">$6-$12</p>
+          <p class="text-[#FFF8E7]/40 text-xs">Offerwall</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-center text-[#FFF8E7]/30 text-xs mt-6">
+      🌍 Google | Unity | AppLovin | ironSource | TikTok | Meta | Amazon | Microsoft + 11 повеќе<br>
+      💰 Сите приходи одат на: <span class="text-yellow-400">aleksandarmakedonskigame@gmail.com</span>
+    </p>
+  </div>
+</div>
+
+<!-- ========== COMPANIONS SCREEN ========== -->
+<div id="screen-companions" class="screen min-h-screen p-4 md:p-8 relative z-10">
+  <div class="max-w-2xl mx-auto">
+    <button onclick="showScreen('menu')" class="game-btn-sm mb-4">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Назад
+    </button>
+    <div class="text-center mb-8">
+      <i data-lucide="shield" class="w-12 h-12 text-blue-400 mx-auto mb-2"></i>
+      <h2 class="text-3xl font-cinzel font-bold text-yellow-400">🐴 Камаради на Александар</h2>
+      <p class="text-[#FFF8E7]/60 text-sm mt-1">4 легендарни пријатели кои те следат низ авантурите!</p>
+    </div>
+    <div id="companions-list" class="space-y-3"></div>
+    <div class="mt-6 p-4 rounded-xl border border-blue-600/30 bg-blue-500/5">
+      <h3 class="text-blue-400 font-bold mb-2">💡 Како работат?</h3>
+      <p class="text-xs text-[#FFF8E7]/60">Секој камрад има уникатна моќ! Отклучуваат се со напредок во нивоата. Користи ги за полесно да ги освоиш предизвиците!</p>
+    </div>
+  </div>
+</div>
+
+<!-- ========== KINGDOM BUILDER SCREEN ========== -->
+<div id="screen-kingdom" class="screen min-h-screen p-4 md:p-8 relative z-10">
+  <div class="max-w-4xl mx-auto">
+    <button onclick="showScreen('menu')" class="game-btn-sm mb-4">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Назад
+    </button>
+    <div class="text-center mb-8">
+      <i data-lucide="castle" class="w-12 h-12 text-yellow-400 mx-auto mb-2"></i>
+      <h2 class="text-3xl font-cinzel font-bold text-yellow-400">🏛️ Градител на Александрија</h2>
+      <p class="text-[#FFF8E7]/60 text-sm mt-1">Изгради го највеличествениот град на светот!</p>
+      <div class="flex justify-center gap-4 mt-3">
+        <div class="bg-black/30 rounded-xl px-4 py-2 border border-yellow-600/20">
+          <p id="kingdom-coins" class="text-yellow-400 font-bold text-xl">0</p>
+          <p class="text-[#FFF8E7]/40 text-xs">🪙 Алекс. Монети</p>
+        </div>
+        <div class="bg-black/30 rounded-xl px-4 py-2 border border-blue-600/20">
+          <p id="kingdom-level" class="text-blue-400 font-bold text-xl">1</p>
+          <p class="text-[#FFF8E7]/40 text-xs">🏰 Ниво на Град</p>
+        </div>
+        <div class="bg-black/30 rounded-xl px-4 py-2 border border-green-600/20">
+          <p id="kingdom-income" class="text-green-400 font-bold text-xl">0</p>
+          <p class="text-[#FFF8E7]/40 text-xs">📈 Приход/мин</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buildings Grid -->
+    <div id="kingdom-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3"></div>
+
+    <!-- Info -->
+    <div class="mt-6 p-4 rounded-xl border border-yellow-600/30 bg-yellow-500/5">
+      <h3 class="text-yellow-400 font-bold mb-2">🏛️ Како работи?</h3>
+      <p class="text-xs text-[#FFF8E7]/60">Секоја зграда дава пасивен приход! Играј нивоа за да заработиш Александриски Монети. Што повеќе згради имаш, толку поголем град!</p>
+      <p class="text-xs text-[#FFF8E7]/40 mt-1">🔒 Отклучување: Заврши ги сите 37 нивоа за да станеш Градител!</p>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div id="modal-payment" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+  <div class="bg-[#0F0C18] border border-yellow-600/40 rounded-2xl max-w-sm w-full p-6">
+    <h3 class="text-xl font-bold text-yellow-400 mb-4 text-center">Плаќање</h3>
+    <p id="payment-product" class="text-[#FFF8E7]/70 text-center mb-4">Производ</p>
+    <p id="payment-price" class="text-yellow-400 text-2xl font-bold text-center mb-4">$0.00</p>
+    <div class="space-y-2">
+      <button onclick="processStripePayment()" class="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:from-blue-500 hover:to-blue-400 transition-all font-medium flex items-center justify-center gap-2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/></svg>
+        Stripe / Visa / Mastercard
+      </button>
+      <button onclick="processPayPalPayment()" class="w-full py-3 bg-gradient-to-r from-blue-800 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-600 transition-all font-medium">
+        PayPal
+      </button>
+    </div>
+    <button onclick="closeModal('modal-payment')" class="mt-3 w-full py-2 text-[#FFF8E7]/40 hover:text-[#FFF8E7] text-sm">Откажи</button>
+  </div>
+</div>
+
+<!-- Share Modal -->
+<div id="modal-share" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+  <div class="bg-[#0F0C18] border border-yellow-600/40 rounded-2xl max-w-lg w-full max-h-[85vh] overflow-hidden">
+    <div class="flex items-center justify-between p-4 border-b border-yellow-600/20">
+      <h3 class="text-lg font-bold text-yellow-400">Сподели со светот!</h3>
+      <button onclick="closeModal('modal-share')" class="p-1 hover:bg-white/10 rounded"><i data-lucide="x" class="w-5 h-5 text-[#FFF8E7]/60"></i></button>
+    </div>
+    <div class="p-4 bg-white/5 mx-4 mt-4 rounded-xl border border-white/10 text-sm">
+      <p class="text-[#FFF8E7]/80 mb-1">Мисија на Александар - Патот на Светлината</p>
+      <p class="text-[#FFF8E7]/50 text-xs">Најуникатната игра за Александар Македонски! 37 нивоа, 4 AI агенти, најевтина на светот!</p>
+      <button onclick="copyLink()" id="copy-btn" class="mt-2 text-xs text-yellow-400 hover:text-yellow-300 flex items-center gap-1"><i data-lucide="link" class="w-3 h-3"></i> Копирај линк</button>
+    </div>
+    <div class="p-4 overflow-y-auto max-h-[50vh]">
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="shareTo('facebook')" class="social-btn bg-blue-600/80 hover:bg-blue-500">📘<span>Facebook</span></button>
+        <button onclick="shareTo('whatsapp')" class="social-btn bg-green-600/80 hover:bg-green-500">💬<span>WhatsApp</span></button>
+        <button onclick="shareTo('twitter')" class="social-btn bg-gray-800/80 hover:bg-gray-700 border border-white/10">𝕏<span>Twitter/X</span></button>
+        <button onclick="shareTo('telegram')" class="social-btn bg-blue-500/80 hover:bg-blue-400">✈️<span>Telegram</span></button>
+        <button onclick="shareTo('messenger')" class="social-btn bg-blue-400/80 hover:bg-blue-300">💙<span>Messenger</span></button>
+        <button onclick="shareTo('instagram')" class="social-btn bg-pink-600/80 hover:bg-pink-500">📸<span>Instagram</span></button>
+        <button onclick="shareTo('tiktok')" class="social-btn bg-black/80 hover:bg-gray-800 border border-white/10">🎵<span>TikTok</span></button>
+        <button onclick="shareTo('youtube')" class="social-btn bg-red-600/80 hover:bg-red-500">▶️<span>YouTube</span></button>
+        <button onclick="shareTo('discord')" class="social-btn bg-indigo-600/80 hover:bg-indigo-500">💜<span>Discord</span></button>
+        <button onclick="shareTo('snapchat')" class="social-btn bg-yellow-500/80 hover:bg-yellow-400 text-black">👻<span>Snapchat</span></button>
+        <button onclick="shareTo('linkedin')" class="social-btn bg-blue-700/80 hover:bg-blue-600">💼<span>LinkedIn</span></button>
+        <button onclick="shareTo('reddit')" class="social-btn bg-orange-600/80 hover:bg-orange-500">🔴<span>Reddit</span></button>
+        <button onclick="shareTo('pinterest')" class="social-btn bg-red-700/80 hover:bg-red-600">📌<span>Pinterest</span></button>
+        <button onclick="shareTo('viber')" class="social-btn bg-purple-600/80 hover:bg-purple-500">💜<span>Viber</span></button>
+        <button onclick="shareTo('vk')" class="social-btn bg-blue-800/80 hover:bg-blue-700">🔷<span>VK</span></button>
+        <button onclick="shareTo('line')" class="social-btn bg-green-600/80 hover:bg-green-500">🟢<span>LINE</span></button>
+        <button onclick="shareTo('wechat')" class="social-btn bg-green-500/80 hover:bg-green-400">💚<span>WeChat</span></button>
+        <button onclick="shareTo('email')" class="social-btn bg-gray-600/80 hover:bg-gray-500">📧<span>Email</span></button>
+        <button onclick="shareTo('tumblr')" class="social-btn bg-indigo-900/80 hover:bg-indigo-800">🔵<span>Tumblr</span></button>
+        <button onclick="shareTo('skype')" class="social-btn bg-blue-400/80 hover:bg-blue-300">💠<span>Skype</span></button>
+        <button onclick="shareTo('teams')" class="social-btn bg-purple-800/80 hover:bg-purple-700">👥<span>Teams</span></button>
+        <button onclick="shareTo('threads')" class="social-btn bg-gray-900/80 hover:bg-gray-800 border border-white/10">🧵<span>Threads</span></button>
+        <button onclick="shareTo('bluesky')" class="social-btn bg-blue-600/80 hover:bg-blue-500">🦋<span>Bluesky</span></button>
+        <button onclick="shareTo('mastodon')" class="social-btn bg-purple-700/80 hover:bg-purple-600">🐘<span>Mastodon</span></button>
+        <button onclick="shareTo('weibo')" class="social-btn bg-red-500/80 hover:bg-red-400">👁️<span>Weibo</span></button>
+        <button onclick="shareTo('qq')" class="social-btn bg-blue-900/80 hover:bg-blue-800">🐧<span>QQ</span></button>
+        <button onclick="shareTo('kakao')" class="social-btn bg-yellow-400/80 hover:bg-yellow-300 text-black">💬<span>Kakao</span></button>
+        <button onclick="shareTo('zalo')" class="social-btn bg-blue-500/80 hover:bg-blue-400">💙<span>Zalo</span></button>
+        <button onclick="shareTo('odnoklassniki')" class="social-btn bg-orange-500/80 hover:bg-orange-400">🟠<span>OK.ru</span></button>
+        <button onclick="shareTo('mailru')" class="social-btn bg-blue-800/80 hover:bg-blue-700">✉️<span>Mail.ru</span></button>
+        <button onclick="shareTo('xing')" class="social-btn bg-green-700/80 hover:bg-green-600">💼<span>Xing</span></button>
+        <button onclick="shareTo('douban')" class="social-btn bg-green-500/80 hover:bg-green-400">📗<span>Douban</span></button>
+        <button onclick="shareTo('qzone')" class="social-btn bg-yellow-500/80 hover:bg-yellow-400 text-black">🌟<span>Qzone</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PASSIVE INCOME SCREEN ========== -->
+<div id="screen-income" class="screen min-h-screen p-4 md:p-8 relative z-10">
+  <div class="max-w-4xl mx-auto">
+    <button onclick="showScreen('menu')" class="game-btn-sm mb-4">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Назад
+    </button>
+    <div class="text-center mb-8">
+      <i data-lucide="trending-up" class="w-12 h-12 text-green-400 mx-auto mb-2"></i>
+      <h2 class="text-3xl font-cinzel font-bold text-yellow-400">Пасивни Приходи</h2>
+      <p class="text-[#FFF8E7]/60 text-sm mt-1">Сè е поврзано со aleksandarmakedonskigame@gmail.com</p>
+    </div>
+
+    <!-- Revenue Stats -->
+    <div id="income-stats" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8"></div>
+
+    <!-- Income Streams -->
+    <div class="space-y-4">
+      <h3 class="text-xl font-bold text-yellow-400">💰 Извори на Приход</h3>
+
+      <!-- 1. Ad Revenue -->
+      <div class="p-4 rounded-xl border border-yellow-600/30 bg-gradient-to-r from-yellow-500/10 to-orange-500/5">
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="eye" class="w-6 h-6 text-yellow-400"></i>
+          <div>
+            <h4 class="font-bold text-yellow-400">1. Google AdSense Реклами</h4>
+            <p class="text-xs text-[#FFF8E7]/50">$0.10 - $2.00 по клик</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center text-sm">
+          <div class="bg-black/30 rounded-lg p-2">
+            <p id="stat-ad-views" class="text-green-400 font-bold">0</p>
+            <p class="text-[#FFF8E7]/40 text-xs">Прегледи</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-2">
+            <p id="stat-ad-clicks" class="text-green-400 font-bold">0</p>
+            <p class="text-[#FFF8E7]/40 text-xs">Кликови</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-2">
+            <p id="stat-ad-revenue" class="text-green-400 font-bold">$0.00</p>
+            <p class="text-[#FFF8E7]/40 text-xs">Приход</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. In-Game Purchases -->
+      <div class="p-4 rounded-xl border border-blue-600/30 bg-gradient-to-r from-blue-500/10 to-purple-500/5">
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="credit-card" class="w-6 h-6 text-blue-400"></i>
+          <div>
+            <h4 class="font-bold text-blue-400">2. In-Game Купувања</h4>
+            <p class="text-xs text-[#FFF8E7]/50">Stripe / PayPal / Visa / Mastercard</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div class="bg-black/30 rounded-lg p-2 text-center">
+            <p class="text-2xl">👑</p>
+            <p class="text-xs text-[#FFF8E7]/70">Премиум</p>
+            <p class="text-blue-400 font-bold text-sm">$0.99</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-2 text-center">
+            <p class="text-2xl">🪙</p>
+            <p class="text-xs text-[#FFF8E7]/70">500 Монети</p>
+            <p class="text-blue-400 font-bold text-sm">$0.49</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-2 text-center">
+            <p class="text-2xl">❤️</p>
+            <p class="text-xs text-[#FFF8E7]/70">Животи</p>
+            <p class="text-blue-400 font-bold text-sm">$0.29</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-2 text-center">
+            <p class="text-2xl">🎫</p>
+            <p class="text-xs text-[#FFF8E7]/70">Сезонска</p>
+            <p class="text-blue-400 font-bold text-sm">$1.99</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Social Media -->
+      <div class="p-4 rounded-xl border border-purple-600/30 bg-gradient-to-r from-purple-500/10 to-pink-500/5">
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="share-2" class="w-6 h-6 text-purple-400"></i>
+          <div>
+            <h4 class="font-bold text-purple-400">3. Социјални Мрежи (18 мрежи)</h4>
+            <p class="text-xs text-[#FFF8E7]/50">$1-5 по 1000 споделувања</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="px-2 py-1 bg-blue-600/30 text-blue-400 rounded-full">📘 Facebook</span>
+          <span class="px-2 py-1 bg-pink-600/30 text-pink-400 rounded-full">📸 Instagram</span>
+          <span class="px-2 py-1 bg-gray-700/50 text-white rounded-full border border-white/10">𝕏 Twitter</span>
+          <span class="px-2 py-1 bg-black/50 text-white rounded-full border border-white/10">🎵 TikTok</span>
+          <span class="px-2 py-1 bg-green-600/30 text-green-400 rounded-full">💬 WhatsApp</span>
+          <span class="px-2 py-1 bg-blue-500/30 text-blue-400 rounded-full">✈️ Telegram</span>
+          <span class="px-2 py-1 bg-indigo-600/30 text-indigo-400 rounded-full">💜 Discord</span>
+          <span class="px-2 py-1 bg-blue-700/30 text-blue-400 rounded-full">💼 LinkedIn</span>
+          <span class="px-2 py-1 bg-orange-600/30 text-orange-400 rounded-full">🔴 Reddit</span>
+          <span class="px-2 py-1 bg-purple-600/30 text-purple-400 rounded-full">💜 Viber</span>
+          <span class="px-2 py-1 bg-yellow-500/30 text-yellow-400 rounded-full">👻 Snapchat</span>
+          <span class="px-2 py-1 bg-blue-800/30 text-blue-400 rounded-full">🔷 VK</span>
+          <span class="px-2 py-1 bg-red-600/30 text-red-400 rounded-full">▶️ YouTube</span>
+          <span class="px-2 py-1 bg-blue-400/30 text-blue-400 rounded-full">💙 Messenger</span>
+          <span class="px-2 py-1 bg-red-700/30 text-red-400 rounded-full">📌 Pinterest</span>
+          <span class="px-2 py-1 bg-green-500/30 text-green-400 rounded-full">💚 WeChat</span>
+          <span class="px-2 py-1 bg-green-600/30 text-green-400 rounded-full">🟢 LINE</span>
+          <span class="px-2 py-1 bg-gray-600/30 text-gray-400 rounded-full">📧 Email</span>
+          <span class="px-2 py-1 bg-indigo-800/40 text-indigo-400 rounded-full">🔵 Tumblr</span>
+          <span class="px-2 py-1 bg-blue-400/30 text-blue-300 rounded-full">💠 Skype</span>
+          <span class="px-2 py-1 bg-purple-800/40 text-purple-400 rounded-full">👥 Teams</span>
+          <span class="px-2 py-1 bg-gray-800/40 text-gray-300 rounded-full border border-white/10">🧵 Threads</span>
+          <span class="px-2 py-1 bg-blue-600/30 text-blue-400 rounded-full">🦋 Bluesky</span>
+          <span class="px-2 py-1 bg-purple-700/30 text-purple-400 rounded-full">🐘 Mastodon</span>
+          <span class="px-2 py-1 bg-red-500/30 text-red-400 rounded-full">👁️ Weibo</span>
+          <span class="px-2 py-1 bg-blue-900/30 text-blue-400 rounded-full">🐧 QQ</span>
+          <span class="px-2 py-1 bg-yellow-400/20 text-yellow-300 rounded-full">💬 Kakao</span>
+          <span class="px-2 py-1 bg-blue-500/30 text-blue-400 rounded-full">💙 Zalo</span>
+          <span class="px-2 py-1 bg-orange-500/30 text-orange-400 rounded-full">🟠 OK.ru</span>
+          <span class="px-2 py-1 bg-blue-800/30 text-blue-400 rounded-full">✉️ Mail.ru</span>
+          <span class="px-2 py-1 bg-green-700/30 text-green-400 rounded-full">💼 Xing</span>
+          <span class="px-2 py-1 bg-green-500/30 text-green-400 rounded-full">📗 Douban</span>
+          <span class="px-2 py-1 bg-yellow-500/30 text-yellow-400 rounded-full">🌟 Qzone</span>
+        </div>
+        <p class="text-[#FFF8E7]/40 text-xs mt-2 text-center">Вкупно: <span class="text-yellow-400 font-bold">33 социјални мрежи</span> поврзани!</p>
+      </div>
+
+      <!-- 4. Subscriptions -->
+      <div class="p-4 rounded-xl border border-green-600/30 bg-gradient-to-r from-green-500/10 to-teal-500/5">
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="repeat" class="w-6 h-6 text-green-400"></i>
+          <div>
+            <h4 class="font-bold text-green-400">4. Месечни Претплати</h4>
+            <p class="text-xs text-[#FFF8E7]/50">Повторувачки приходи секој месец</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div class="bg-gradient-to-b from-orange-900/30 to-transparent rounded-lg p-3 text-center border border-orange-600/30">
+            <p class="text-orange-400 font-bold">🥉 Бронзен</p>
+            <p class="text-2xl font-bold text-yellow-400">$0.99</p>
+            <p class="text-xs text-[#FFF8E7]/50">месечно</p>
+          </div>
+          <div class="bg-gradient-to-b from-gray-600/30 to-transparent rounded-lg p-3 text-center border border-gray-400/30">
+            <p class="text-gray-300 font-bold">🥈 Сребрен</p>
+            <p class="text-2xl font-bold text-yellow-400">$2.99</p>
+            <p class="text-xs text-[#FFF8E7]/50">месечно</p>
+          </div>
+          <div class="bg-gradient-to-b from-yellow-600/30 to-transparent rounded-lg p-3 text-center border border-yellow-500/30">
+            <p class="text-yellow-400 font-bold">🥇 Златен</p>
+            <p class="text-2xl font-bold text-yellow-400">$4.99</p>
+            <p class="text-xs text-[#FFF8E7]/50">месечно</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Referral Program -->
+      <div class="p-4 rounded-xl border border-teal-600/30 bg-gradient-to-r from-teal-500/10 to-cyan-500/5">
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="users" class="w-6 h-6 text-teal-400"></i>
+          <div>
+            <h4 class="font-bold text-teal-400">5. Реферален Програм</h4>
+            <p class="text-xs text-[#FFF8E7]/50">50 монети за секое покането пријател</p>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <input id="ref-link" type="text" readonly 
+            class="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-[#FFF8E7]"
+            value="">
+          <button onclick="copyRefLink()" class="game-btn-sm">📋 Копирај</button>
+        </div>
+      </div>
+
+      <!-- 6. Donations -->
+      <div class="p-4 rounded-xl border border-pink-600/30 bg-gradient-to-r from-pink-500/10 to-rose-500/5">
+        <div class="flex items-center gap-3 mb-3">
+          <i data-lucide="heart" class="w-6 h-6 text-pink-400"></i>
+          <div>
+            <h4 class="font-bold text-pink-400">6. Донации / Buy Me a Coffee</h4>
+            <p class="text-xs text-[#FFF8E7]/50">Поддршка од фанови</p>
+          </div>
+        </div>
+        <div class="flex gap-2 justify-center">
+          <button onclick="donate(1)" class="game-btn-sm">☕ $1</button>
+          <button onclick="donate(3)" class="game-btn-sm">☕ $3</button>
+          <button onclick="donate(5)" class="game-btn-sm">☕ $5</button>
+          <button onclick="donate(10)" class="game-btn-sm">☕ $10</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue Projection -->
+    <div class="mt-8 p-4 rounded-xl border border-yellow-600/30 bg-gradient-to-r from-yellow-500/10 to-orange-500/5">
+      <h3 class="text-lg font-bold text-yellow-400 mb-3">📈 Прогноза за Приходи</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+        <div class="bg-black/30 rounded-lg p-2 text-center">
+          <p id="proj-daily" class="text-yellow-400 font-bold">$0.50</p>
+          <p class="text-[#FFF8E7]/40 text-xs">Дневно</p>
+        </div>
+        <div class="bg-black/30 rounded-lg p-2 text-center">
+          <p id="proj-weekly" class="text-yellow-400 font-bold">$3.50</p>
+          <p class="text-[#FFF8E7]/40 text-xs">Неделно</p>
+        </div>
+        <div class="bg-black/30 rounded-lg p-2 text-center">
+          <p id="proj-monthly" class="text-yellow-400 font-bold">$15.00</p>
+          <p class="text-[#FFF8E7]/40 text-xs">Месечно</p>
+        </div>
+        <div class="bg-black/30 rounded-lg p-2 text-center">
+          <p id="proj-yearly" class="text-yellow-400 font-bold">$180.00</p>
+          <p class="text-[#FFF8E7]/40 text-xs">Годишно</p>
+        </div>
+      </div>
+      <p class="text-[#FFF8E7]/30 text-xs mt-2 text-center">* Процената е со 100 активни играчи. Скалира со бројот на играчи!</p>
+    </div>
+
+    <!-- Email Footer -->
+    <p class="text-center text-[#FFF8E7]/30 text-xs mt-6">
+      💰 Сите приходи одат на: <span class="text-yellow-400">aleksandarmakedonskigame@gmail.com</span><br>
+      💳 Stripe | PayPal | Visa | Mastercard | Google AdSense
+    </p>
+  </div>
+</div>
+
+<!-- ========== 🏛️ LIVING LEGACY CAPSULE (World's First) ========== -->
+<div id="screen-capsule" class="screen min-h-screen p-4 md:p-8 relative z-10">
+  <div class="max-w-2xl mx-auto">
+    <button onclick="showScreen('menu')" class="game-btn-sm mb-4">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Назад
+    </button>
+    <div id="capsule-host"></div>
+  </div>
+</div>
+
+<!-- ========== ✨ WISDOM WALL ========== -->
+<div id="screen-wisdomwall" class="screen min-h-screen p-4 md:p-8 relative z-10">
+  <div class="max-w-2xl mx-auto">
+    <button onclick="showScreen('menu')" class="game-btn-sm mb-4">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Назад
+    </button>
+    <div class="text-center mb-6">
+      <i data-lucide="quote" class="w-10 h-10 text-yellow-400 mx-auto mb-2"></i>
+      <h2 class="text-3xl font-cinzel font-bold text-yellow-400">Светски Ѕид на Мудрост</h2>
+      <p class="text-[#FFF8E7]/60 text-sm mt-1"><span id="wisdom-wall-count">0</span> мудрости од патници низ светот</p>
+      <p class="text-[#FFF8E7]/40 text-xs mt-1 font-caveat">Прв систем во едукативни игри — секој играч пишува историја.</p>
+    </div>
+    <div id="wisdom-wall-list" class="space-y-3"></div>
+  </div>
+</div>
+
+<!-- ========== 📜 KNOWLEDGE PASSPORT ========== -->
+<div id="screen-passport" class="screen min-h-screen p-4 md:p-8 relative z-10">
+  <div class="max-w-lg mx-auto">
+    <button onclick="showScreen('menu')" class="game-btn-sm mb-4">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Назад
+    </button>
+    <div class="text-center mb-4">
+      <h2 class="text-2xl font-cinzel font-bold text-yellow-400">📜 Светски Пасош на Знаењето</h2>
+      <p class="text-[#FFF8E7]/60 text-xs mt-1">Уникатна персонализирана диплома — симни и сподели</p>
+    </div>
+    <div id="passport-svg-host" class="mb-4 flex justify-center"></div>
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="Legacy.downloadPassport()" class="game-btn-sm justify-center py-3 flex items-center gap-2">
+        <i data-lucide="download" class="w-4 h-4"></i> Симни SVG
+      </button>
+      <button onclick="Legacy.showPassport()" class="game-btn-sm justify-center py-3 flex items-center gap-2">
+        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Обнови
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ⚡ WISDOM SPARK MODAL ========== -->
+<div id="modal-wisdom-spark" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="bg-[#1A1525] border-2 border-yellow-500/40 rounded-2xl max-w-lg w-full p-5 shadow-2xl" style="box-shadow:0 0 60px rgba(255,215,0,0.3)">
+    <div class="flex justify-between items-center mb-3">
+      <div>
+        <h3 class="font-cinzel font-bold text-yellow-400 text-lg">⚡ Искра на Мудрост</h3>
+        <p class="text-[#FFF8E7]/50 text-xs">Свиток <span id="spark-fact-id">0</span>/37 — <span id="spark-title"></span></p>
+      </div>
+      <button onclick="document.getElementById('modal-wisdom-spark').classList.add('hidden')" class="text-[#FFF8E7]/40 hover:text-yellow-400 text-2xl leading-none">×</button>
+    </div>
+    <div id="spark-svg-host" class="mb-4 rounded-xl overflow-hidden"></div>
+    <div class="grid grid-cols-2 gap-2">
+      <button onclick="Legacy.shareWisdomSpark()" class="game-btn flex items-center justify-center gap-2 py-2.5 text-sm">
+        <i data-lucide="share-2" class="w-4 h-4"></i> Сподели
+      </button>
+      <button onclick="Legacy.downloadWisdomSpark()" class="game-btn-sm justify-center py-2.5 flex items-center gap-2 text-sm">
+        <i data-lucide="download" class="w-4 h-4"></i> Симни картичка
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 📱 MOBILE TOUCH CONTROLS ========== -->
+<div id="mobile-controls">
+  <div class="touch-dpad">
+    <div class="touch-btn" id="touch-left" aria-label="Left">◀</div>
+    <div class="touch-btn" id="touch-right" aria-label="Right">▶</div>
+  </div>
+  <div class="touch-btn" id="touch-jump" aria-label="Jump">SKOK</div>
+</div>
+
+<!-- ========== 📲 PWA INSTALL BUTTON ========== -->
+<button id="pwa-install-btn" aria-label="Инсталирај апликација">
+  <span>📲</span> Инсталирај го Александар
+</button>
+
+<script src="tracking.js"></script>
+<script src="monetization.js"></script>
+<script src="integrations.js"></script>
+<script src="analytics_center.js"></script>
+<script src="legacy.js"></script>
+<script src="game.js"></script>
+<script src="pwa.js"></script>
+</body>
+</html>
