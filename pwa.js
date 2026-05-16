@@ -1,155 +1,271 @@
-# Политика на Приватност / Privacy Policy
+// ============================================================
+// 📱 PWA + MOBILE — Александар v6.0
+// Service Worker · Install Prompt · Touch Controls · Orientation
+// ============================================================
 
-**Last updated: May 2026**
+const PWA = {
+  deferredPrompt: null,
+  isInstalled: false,
+  isStandalone: false,
 
-## English Version
+  init() {
+    this.detectPlatform();
+    this.registerServiceWorker();
+    this.setupInstallPrompt();
+    this.setupTouchControls();
+    this.setupOrientationHandler();
+    this.handleURLParams();
+    console.log('[PWA] Initialized · platform:', this.platform, '· standalone:', this.isStandalone);
+  },
 
-### Introduction
+  // === DETECT PLATFORM ===
+  detectPlatform() {
+    const ua = navigator.userAgent.toLowerCase();
+    this.isIOS = /iphone|ipad|ipod/.test(ua);
+    this.isAndroid = /android/.test(ua);
+    this.isMobile = this.isIOS || this.isAndroid || /mobile|tablet/.test(ua);
+    this.isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    this.isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                        window.navigator.standalone === true;
+    this.platform = this.isIOS ? 'iOS' : this.isAndroid ? 'Android' :
+                    this.isMobile ? 'Mobile' : 'Desktop';
 
-"Alexander's Quest — The Path of Light" ("the App") is an educational game developed by World Protocol Academy. This Privacy Policy explains how we handle data when you use the App.
+    document.body.classList.add('platform-' + this.platform.toLowerCase());
+    if (this.isTouch) document.body.classList.add('touch-device');
+    if (this.isStandalone) document.body.classList.add('pwa-standalone');
 
-### Information We Collect
+    // Track in analytics
+    if (window.MagicTracking) {
+      window.MagicTracking.trackEvent('platform_detected', {
+        platform: this.platform,
+        standalone: this.isStandalone,
+        touch: this.isTouch,
+        viewport: window.innerWidth + 'x' + window.innerHeight,
+      });
+    }
+  },
 
-**Locally Stored Data (on your device only):**
-- Game progress (levels completed, stars earned, coins)
-- Player name (you choose this)
-- Language preference (Macedonian/English)
-- Wisdom quotes you submit (stored locally only)
-- Audio/music settings
+  // === SERVICE WORKER ===
+  registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) {
+      console.log('[PWA] Service Worker not supported');
+      return;
+    }
+    // Only register over HTTP(S), not file://
+    if (window.location.protocol === 'file:') {
+      console.log('[PWA] Skipping SW registration (file:// protocol)');
+      return;
+    }
 
-**This data NEVER leaves your device.** It is stored in your browser's localStorage.
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => {
+          console.log('[PWA] Service Worker registered:', reg.scope);
+          // Auto-update check
+          reg.update();
+          setInterval(() => reg.update(), 60 * 60 * 1000); // hourly
 
-**Analytics Data (anonymous):**
-If our analytics modules are enabled (Google Analytics 4, Facebook Pixel), we may collect:
-- Anonymous game events (level starts, completions)
-- Approximate session duration
-- Anonymous device type and language
-- Page views and clicks (no personal data)
+          // Handle updates
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                this.showToast('🔄 Нова верзија на играта — освежи!', 5000);
+              }
+            });
+          });
+        })
+        .catch(err => console.warn('[PWA] SW registration failed:', err));
+    });
+  },
 
-This data is anonymous and aggregated. We never collect names, emails, or personal identifiers from analytics.
+  // === INSTALL PROMPT ===
+  setupInstallPrompt() {
+    // Save the prompt event for later
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      this.deferredPrompt = e;
+      const btn = document.getElementById('pwa-install-btn');
+      if (btn && !this.isStandalone) {
+        btn.classList.add('show');
+        btn.addEventListener('click', () => this.promptInstall());
+      }
+      console.log('[PWA] Install prompt ready');
+    });
 
-### What We DO NOT Collect
+    // After install
+    window.addEventListener('appinstalled', () => {
+      this.isInstalled = true;
+      const btn = document.getElementById('pwa-install-btn');
+      if (btn) btn.classList.remove('show');
+      this.showToast('🎉 Александар е инсталиран! Барај го на дома-екранот.', 5000);
+      if (window.MagicTracking) {
+        window.MagicTracking.trackEvent('pwa_installed', { platform: this.platform });
+      }
+    });
 
-- ❌ Real names, addresses, phone numbers
-- ❌ Email addresses (unless you contact us)
-- ❌ Photos, contacts, location
-- ❌ Voice or video recordings
-- ❌ Payment information (handled by Stripe/PayPal directly)
+    // iOS — no beforeinstallprompt; show manual instructions if running in Safari
+    if (this.isIOS && !this.isStandalone) {
+      setTimeout(() => {
+        const visited = localStorage.getItem('ios_install_hint_shown');
+        if (!visited) {
+          this.showIOSInstallHint();
+          localStorage.setItem('ios_install_hint_shown', '1');
+        }
+      }, 10000);
+    }
+  },
 
-### Children's Privacy (COPPA Compliance)
+  promptInstall() {
+    if (!this.deferredPrompt) return;
+    this.deferredPrompt.prompt();
+    this.deferredPrompt.userChoice.then(result => {
+      console.log('[PWA] User choice:', result.outcome);
+      if (window.MagicTracking) {
+        window.MagicTracking.trackEvent('pwa_install_prompt', { outcome: result.outcome });
+      }
+      this.deferredPrompt = null;
+    });
+  },
 
-This app is suitable for children. We:
-- Do NOT collect personal information from children under 13
-- Do NOT require account registration
-- Do NOT use behavioral advertising targeting children
-- Do NOT share data with third parties
+  showIOSInstallHint() {
+    const hint = document.createElement('div');
+    hint.id = 'ios-install-hint';
+    hint.style.cssText = 'position:fixed;bottom:20px;left:20px;right:20px;background:linear-gradient(135deg,#1A1525,#4A90E2);color:white;padding:16px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.5);z-index:9999;font-family:Inter,sans-serif;font-size:14px;border:1px solid rgba(255,215,0,0.3)';
+    hint.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:32px">📲</span>
+        <div style="flex:1">
+          <p style="font-weight:bold;color:#FFD700;margin-bottom:4px">Инсталирај го Александар!</p>
+          <p style="opacity:0.85;font-size:12px;line-height:1.4">Притисни <strong>Share</strong> (квадратот со стрелка нагоре), потоа <strong>"Add to Home Screen"</strong></p>
+        </div>
+        <button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;opacity:0.6">×</button>
+      </div>
+    `;
+    document.body.appendChild(hint);
+    setTimeout(() => {
+      if (hint.parentNode) hint.style.transition = 'opacity 0.5s';
+      if (hint.parentNode) hint.style.opacity = '0';
+      setTimeout(() => hint.remove(), 500);
+    }, 12000);
+  },
 
-### Third-Party Services
+  // === TOUCH CONTROLS ===
+  setupTouchControls() {
+    if (!this.isTouch) return;
 
-The app may load resources from:
-- **Google Fonts** (fonts only, no tracking)
-- **Tailwind CSS CDN** (styling only)
-- **Phaser game engine CDN**
-- **Stripe / PayPal** (only if you make a purchase)
+    const left = document.getElementById('touch-left');
+    const right = document.getElementById('touch-right');
+    const jump = document.getElementById('touch-jump');
+    const controls = document.getElementById('mobile-controls');
 
-These services may log basic request metadata (IP, browser type) per their own policies.
+    if (!left || !right || !jump || !controls) return;
 
-### Your Rights
+    // Show on game screen, hide elsewhere
+    const observer = new MutationObserver(() => {
+      const gameActive = document.getElementById('screen-game')?.classList.contains('active');
+      controls.classList.toggle('active', gameActive);
+    });
+    document.querySelectorAll('.screen').forEach(s => {
+      observer.observe(s, { attributes: true, attributeFilter: ['class'] });
+    });
 
-You can at any time:
-- **Delete all data:** Clear your browser's site data or uninstall the app
-- **Disable analytics:** Use browser ad-blockers or "Do Not Track" mode
-- **Contact us:** aleksandarmakedonskigame@gmail.com
+    // Hook touch buttons to simulated keyboard
+    const sim = (key, isDown) => {
+      const ev = new KeyboardEvent(isDown ? 'keydown' : 'keyup', {
+        key: key,
+        code: key === 'ArrowLeft' ? 'ArrowLeft' :
+              key === 'ArrowRight' ? 'ArrowRight' : 'Space',
+        keyCode: key === 'ArrowLeft' ? 37 : key === 'ArrowRight' ? 39 : 32,
+        which: key === 'ArrowLeft' ? 37 : key === 'ArrowRight' ? 39 : 32,
+        bubbles: true,
+        cancelable: true,
+      });
+      document.dispatchEvent(ev);
+      window.dispatchEvent(ev);
+    };
 
-### Data Security
+    const bind = (btn, key) => {
+      let pressed = false;
+      const start = e => { e.preventDefault(); pressed = true; btn.classList.add('pressed'); sim(key, true); };
+      const end = e => { if (pressed) { e.preventDefault(); pressed = false; btn.classList.remove('pressed'); sim(key, false); } };
+      btn.addEventListener('touchstart', start, { passive: false });
+      btn.addEventListener('touchend', end);
+      btn.addEventListener('touchcancel', end);
+      // Also mouse fallback for testing
+      btn.addEventListener('mousedown', start);
+      btn.addEventListener('mouseup', end);
+      btn.addEventListener('mouseleave', end);
+    };
 
-Since data stays on your device, security is your device's standard protection. We do not maintain servers with your personal data.
+    bind(left, 'ArrowLeft');
+    bind(right, 'ArrowRight');
+    bind(jump, ' '); // Space
 
-### Changes to This Policy
+    console.log('[PWA] Touch controls bound');
+  },
 
-We may update this policy. Last update date is at the top.
+  // === ORIENTATION ===
+  setupOrientationHandler() {
+    const checkOrientation = () => {
+      const isLandscape = window.innerWidth > window.innerHeight;
+      document.body.classList.toggle('orientation-landscape', isLandscape);
+      document.body.classList.toggle('orientation-portrait', !isLandscape);
 
-### Contact
+      // Recommend landscape on small phones during gameplay
+      if (this.isMobile && !isLandscape && Math.min(window.innerWidth, window.innerHeight) < 500) {
+        const gameActive = document.getElementById('screen-game')?.classList.contains('active');
+        if (gameActive && !this._rotationHintShown) {
+          this._rotationHintShown = true;
+          this.showToast('💡 Совет: ротирај го телефонот хоризонтално за подобро искуство!', 4000);
+        }
+      }
+    };
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 200));
+  },
 
-**Email:** aleksandarmakedonskigame@gmail.com
-**Organization:** World Protocol Academy
-**Website:** worldprotocolacademy.com
+  // === URL PARAMS — handle shortcuts from manifest ===
+  handleURLParams() {
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get('action');
+    setTimeout(() => {
+      if (action === 'play' && typeof startGame === 'function') {
+        startGame();
+      } else if (action === 'capsule' && window.Legacy?.showCapsule) {
+        window.Legacy.showCapsule();
+      }
+    }, 1500);
 
----
+    // Track source (helps measure where installs come from)
+    const source = params.get('source');
+    if (source && window.MagicTracking) {
+      window.MagicTracking.trackEvent('app_opened', { source });
+    }
+  },
 
-## Македонска Верзија
+  // === TOAST helper ===
+  showToast(msg, duration = 3000) {
+    let toast = document.getElementById('pwa-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'pwa-toast';
+      toast.style.cssText = 'position:fixed;top:calc(20px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-150px);background:linear-gradient(135deg,#1A1525,#4A90E2);color:white;padding:12px 20px;border-radius:24px;box-shadow:0 8px 30px rgba(0,0,0,0.5);z-index:9999;font-family:Inter,sans-serif;font-size:14px;font-weight:500;border:1px solid rgba(255,215,0,0.3);transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);max-width:90vw;text-align:center';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => {
+      toast.style.transform = 'translateX(-50%) translateY(-150px)';
+    }, duration);
+  },
+};
 
-### Вовед
+// Auto-init when DOM ready
+if (document.readyState !== 'loading') PWA.init();
+else document.addEventListener('DOMContentLoaded', () => PWA.init());
 
-"Мисија на Александар — Патот на Светлината" е образовна игра развиена од World Protocol Academy. Оваа политика објаснува како се однесуваме со податоците кога ја користиш играта.
-
-### Кои Податоци Ги Собираме
-
-**Локални податоци (само на твојот уред):**
-- Прогрес во играта (завршени нивоа, ѕвезди, монети)
-- Името на играчот (ти го избираш)
-- Јазичен избор (македонски/англиски)
-- Мудрости што ги пишуваш (само локално зачувани)
-- Аудио поставки
-
-**Овие податоци НИКОГАШ не ја напуштаат твојата уред.** Се чуваат во localStorage на browser-от.
-
-**Аналитика (анонимна):**
-Ако се вклучат аналитички модули, може да собираме:
-- Анонимни настани (старт на ниво, завршување)
-- Просечно време на сесија
-- Тип на уред и јазик
-- Прегледи и кликови
-
-Тоа е анонимно и агрегирано — никогаш не собираме имиња, мејлови или лични податоци.
-
-### Што НЕ Собираме
-
-- ❌ Реални имиња, адреси, телефони
-- ❌ Е-маил (освен ако не нè контактираш)
-- ❌ Фотографии, контакти, локација
-- ❌ Глас или видео
-- ❌ Платежни картички (Stripe/PayPal се грижат за тоа)
-
-### Приватност на Децата (COPPA)
-
-Играта е безбедна за деца. Ние:
-- НЕ собираме лични податоци од деца под 13
-- НЕ бараме регистрација
-- НЕ користиме реклами насочени кон деца
-- НЕ споделуваме податоци со трети лица
-
-### Контакт
-
-**Email:** aleksandarmakedonskigame@gmail.com
-**Организација:** World Protocol Academy
-
----
-
-## Required Disclosures for Play Store / App Store
-
-### Data Safety Summary
-
-| Data Type | Collected? | Purpose | Shared? |
-|-----------|-----------|---------|---------|
-| Personal info | No | - | No |
-| Game progress | Locally only | App functionality | No |
-| App activity | Yes (anonymous) | Analytics & improvement | Aggregated only |
-| Device info | Yes (anonymous) | Compatibility | No |
-| Location | No | - | No |
-| Contacts | No | - | No |
-| Photos/media | No | - | No |
-| Messages | No | - | No |
-| Files/docs | No | - | No |
-| Calendar | No | - | No |
-| Health/fitness | No | - | No |
-| Financial info | No (Stripe/PayPal handle) | - | No |
-
-### Permissions Used
-- **Internet:** to load CDN resources (Phaser, Tailwind, fonts)
-- **Storage:** only browser localStorage for save game
-- **No camera, microphone, contacts, location**
-
----
-
-*This policy complies with GDPR (EU), CCPA (California), COPPA (children), and Play Store / App Store requirements.*
+// Export
+if (typeof window !== 'undefined') window.PWA = PWA;
