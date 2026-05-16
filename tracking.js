@@ -1,175 +1,134 @@
-# 📱 Како да го качиш Александар на Play Store и App Store
+// 👑 Мисија на Александар — Service Worker v1.0
+// Offline support, instant load, app-like experience
 
-> **Овој водич ти ги дава 3-те реални начини да ја имаш играта како апликација на телефон.**
+const CACHE_NAME = 'aleksandar-v6-1';
+const RUNTIME_CACHE = 'aleksandar-runtime-v6-1';
 
----
+// Critical app shell — cached on install
+const APP_SHELL = [
+  './',
+  './index.html',
+  './game.js',
+  './legacy.js',
+  './monetization.js',
+  './tracking.js',
+  './pwa.js',
+  './integrations.js',
+  './analytics_center.js',
+  './manifest.json',
+  './icons/icon-72.png',
+  './icons/icon-96.png',
+  './icons/icon-128.png',
+  './icons/icon-144.png',
+  './icons/icon-152.png',
+  './icons/icon-192.png',
+  './icons/icon-384.png',
+  './icons/icon-512.png',
+  './icons/apple-touch-icon.png',
+  './icons/icon-maskable-512.png',
+  './icons/favicon-16.png',
+  './icons/favicon-32.png',
+];
 
-## 🎯 ОПЦИЈА 1: PWA — ЗА 0 ДЕНАРИ И 0 МИНУТИ (ВЕЌЕ ГОТОВО!)
+// External CDN resources — cached on first request
+const RUNTIME_URLS = [
+  'https://cdn.tailwindcss.com',
+  'https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js',
+  'https://unpkg.com/lucide@latest',
+  'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js',
+  'https://fonts.googleapis.com',
+];
 
-**Тоа е најмудрото и најбрзото решение.** Играта **веќе е PWA** во овој ZIP — секој играч на iPhone, Android, или PC може директно да ја инсталира како апликација од browser-от, **без store, без чекање за одобрување, без $99 годишно**.
+// === INSTALL: precache the app shell ===
+self.addEventListener('install', event => {
+  console.log('[SW] Installing...');
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('[SW] Pre-caching app shell');
+        // Cache files individually to avoid one failure breaking everything
+        return Promise.allSettled(
+          APP_SHELL.map(url =>
+            cache.add(url).catch(err => console.warn('[SW] Failed to cache:', url, err))
+          )
+        );
+      })
+      .then(() => self.skipWaiting())
+  );
+});
 
-### Како се инсталира?
+// === ACTIVATE: clean up old caches ===
+self.addEventListener('activate', event => {
+  console.log('[SW] Activating...');
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys
+          .filter(key => key !== CACHE_NAME && key !== RUNTIME_CACHE)
+          .map(key => {
+            console.log('[SW] Deleting old cache:', key);
+            return caches.delete(key);
+          })
+      )
+    ).then(() => self.clients.claim())
+  );
+});
 
-**📱 Android (Chrome):**
-1. Отвори ја играта во Chrome
-2. Притисни ⋮ менито горе десно
-3. Кликни **"Install app"** или **"Add to Home screen"**
-4. Готово! Иконата е на дома-екранот, апликацијата работи offline.
+// === FETCH: serve from cache, fall back to network ===
+self.addEventListener('fetch', event => {
+  const req = event.request;
 
-**🍎 iOS (Safari):**
-1. Отвори ја играта во Safari (МОРА Safari, не Chrome!)
-2. Притисни Share копчето (квадрат со стрелка нагоре)
-3. Скролај надолу → **"Add to Home Screen"**
-4. Готово! Изгледа како native апликација.
+  // Skip non-GET requests
+  if (req.method !== 'GET') return;
 
-**💻 PC / Mac (Chrome, Edge, Brave):**
-1. Отвори ја играта
-2. Во address bar-от, десно ќе се појави икона ⊕ или 📲
-3. Кликни → "Install"
-4. Играта се отвора во посебно прозорче како native апликација.
+  // Skip Stripe/PayPal/Analytics URLs — they should always be fresh
+  const skipDomains = ['stripe.com', 'paypal.com', 'google-analytics.com',
+                       'googletagmanager.com', 'facebook.net', 'tiktok.com'];
+  if (skipDomains.some(d => req.url.includes(d))) {
+    return;
+  }
 
-### Што ти треба за PWA да работи?
+  // Strategy: Cache-first for app shell, network-first for everything else
+  const reqPath = new URL(req.url).pathname;
+  const isAppShell = APP_SHELL.some(url => {
+    const clean = url.replace(/^\.\//, '/');
+    return reqPath.endsWith(clean) || (url === './' && req.mode === 'navigate');
+  });
 
-Само **една работа**: играта да биде на HTTPS URL. Тоа значи треба online хостинг. Бесплатни опции:
+  if (isAppShell) {
+    // Cache-first
+    event.respondWith(
+      caches.match(req).then(cached => cached || fetch(req).then(response => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
+        }
+        return response;
+      }))
+    );
+  } else {
+    // Network-first with cache fallback (for CDNs)
+    event.respondWith(
+      fetch(req)
+        .then(response => {
+          if (response.ok && (response.type === 'basic' || response.type === 'cors')) {
+            const clone = response.clone();
+            caches.open(RUNTIME_CACHE).then(cache => cache.put(req, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(req).then(cached => cached || new Response('', { status: 504 })))
+    );
+  }
+});
 
-| Сервис | Цена | Време | URL пример |
-|--------|------|-------|------------|
-| **GitHub Pages** | $0 | 5 мин | `username.github.io/aleksandar` |
-| **Netlify Drop** | $0 | 30 сек | `random.netlify.app` |
-| **Vercel** | $0 | 5 мин | `aleksandar.vercel.app` |
-| **Cloudflare Pages** | $0 | 5 мин | `aleksandar.pages.dev` |
-
-**Препорака:** GitHub Pages (професионално + бесплатно засекогаш).
-
----
-
-## 🤖 ОПЦИЈА 2: GOOGLE PLAY STORE — ПРЕКУ PWA BUILDER
-
-Тоа е **најлесниот реален начин** да биде на Play Store. **PWA Builder** е бесплатна Microsoft алатка што ја претвора PWA-та во вистински Android APK/AAB.
-
-### Чекор по чекор:
-
-1. **Прво качи ја играта како PWA** (Опција 1 — на пр. GitHub Pages)
-2. Отвори **https://www.pwabuilder.com**
-3. Внеси го URL-от на твојата играта
-4. Алатката ќе скенира — ќе види дека PWA-та е готова (има manifest, sw.js, икони)
-5. Кликни **"Package for Stores"** → **Android**
-6. Симни го генерираниот `.aab` (Android App Bundle) фајл
-7. Регистрирај се на **Google Play Console**: https://play.google.com/console
-   - **Цена:** $25 USD еднократно
-8. Создади нов app → Upload `.aab` фајл
-9. Пополни ги информациите:
-   - **Име:** Мисија на Александар
-   - **Краток опис:** Образовна игра за деца — 37 нивоа за Александар Велики
-   - **Долг опис:** (земи од README.md)
-   - **Категорија:** Education / Kids
-   - **Возраст:** 7+ или 4+ (зависи од содржината)
-   - **Screenshots:** треба 2-8 слики (можеш да земеш од играта)
-   - **Privacy Policy:** ВАЖНО — мора да биде линк! Имаш и шаблон во `PRIVACY_POLICY.md`
-10. Прати за преглед — обично **2-7 дена** одговор
-11. Кога е одобрено → играта е на Play Store!
-
-### Што го прави PWA Builder супер?
-- Игра остануа PWA — кога ажурираш на GitHub, апликацијата автоматски ажурира!
-- Не треба да научиш Android Studio
-- Не треба Java/Kotlin
-
----
-
-## 🍎 ОПЦИЈА 3: APPLE APP STORE — НАЈТЕШКО, БАРА MAC
-
-Apple бара **Mac компјутер** и Apple Developer account ($99 USD/година).
-
-### Опција 3a: Преку Capacitor (препорачано)
-
-1. Купи Apple Developer account на https://developer.apple.com ($99/година)
-2. На Mac компјутер, инсталирај Node.js и Xcode
-3. Во terminal:
-   ```bash
-   npm install -g @capacitor/cli
-   npx cap init "Aleksandar" "com.worldprotocolacademy.aleksandar"
-   npm install @capacitor/core @capacitor/ios
-   npx cap add ios
-   # Копирај index.html + сите фајлови во www/ папка
-   npx cap copy ios
-   npx cap open ios
-   ```
-4. Во Xcode: Build → Archive → Upload to App Store Connect
-5. Пополни info на https://appstoreconnect.apple.com
-6. Submit for Review (обично 1-3 дена)
-
-### Опција 3b: PWA Builder за iOS
-
-PWA Builder исто така генерира iOS package, **но мора Mac за финален потпис**. Тоа е попростно ако веќе имаш Mac.
-
-### Apple специфики:
-- **Cena:** $99 USD годишно (recurring)
-- **Може да биде одбиено!** Apple е строг
-- Мора privacy policy + ToS
-- App size limit 4GB
-- Реклами се компликувани (треба IDFA permissions)
-
----
-
-## 💡 ИСКРЕНА ПРЕПОРАКА ЗА ТЕБЕ
-
-Како другар, моето искрено мислење:
-
-| Чекор | Кога | Зошто |
-|-------|------|-------|
-| **1. PWA на GitHub Pages** | СЕГА (5 мин) | $0, веднаш функционира, сите ја играат |
-| **2. Google Play преку PWA Builder** | По 1-2 месеци | $25, ширење на Android корисници |
-| **3. Apple App Store** | Само ако имаш Mac + сериозно сакаш | $99/година е сериозна инвестиција |
-
-**Зошто прво PWA?** Затоа што:
-- Можеш да тестираш без чекање store одобрување
-- Корисниците ја „инсталираат" без store
-- Кога ќе сакаш, лесно се претвора во native app
-- Ажурирања се **автоматски** (не чекаш Apple преглед!)
-
----
-
-## 📋 ШТО ТРЕБА ЗА STORE СУБМИШН?
-
-Без разлика дали оди на Play или App Store, треба:
-
-### Документи
-- ✅ **Privacy Policy** → имаш шаблон во `PRIVACY_POLICY.md`
-- ✅ **Terms of Service** → имаш шаблон во `TERMS.md`
-- ✅ **Content rating** → Education / Kids, безбедно
-
-### Marketing assets
-- ✅ Икона 512x512 → имаш `icons/icon-512.png`
-- ✅ Feature graphic 1024x500 (само Google Play)
-- ✅ Screenshots:
-  - Android: 2-8 phone + tablet
-  - iOS: 6.5" iPhone + iPad Pro (можеш да земеш во симулатор)
-
-### Текст
-- ✅ Краток опис (80 знаци Google, 30 Apple)
-- ✅ Долг опис (4000 знаци Google, нема лимит Apple)
-- ✅ Keywords (само Apple, 100 знаци)
-- ✅ Промо текст
-
-### Технички
-- ✅ Privacy questionnaire (што собира играта)
-- ✅ Data safety section
-- ✅ Age rating questionnaire
-
----
-
-## 🆘 КОНТАКТИ И ПОМОШ
-
-**GitHub Pages помош:** https://docs.github.com/en/pages
-**PWA Builder:** https://www.pwabuilder.com
-**Google Play Console:** https://play.google.com/console
-**Apple Developer:** https://developer.apple.com
-**Capacitor (iOS bridge):** https://capacitorjs.com
-
-**За дополнителна помош:** aleksandarmakedonskigame@gmail.com
-
----
-
-*"Светот е книга, а оние кои патуваат читаат повеќе страници."*
-
-— World Protocol Academy
+// === MESSAGE: allow manual cache clearing from app ===
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  if (event.data && event.data.type === 'CLEAR_CACHE') {
+    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+      .then(() => event.ports[0]?.postMessage({ cleared: true }));
+  }
+});
