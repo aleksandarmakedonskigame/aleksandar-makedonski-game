@@ -1,117 +1,46 @@
-#!/bin/bash
-# 👑 МИСИЈА НА АЛЕКСАНДАР v5.0 — Smart Launcher
+# QA преглед — Мисија на Александар v6.0
 
-clear
-echo ""
-echo "==============================================="
-echo "  👑 МИСИЈА НА АЛЕКСАНДАР v5.0"
-echo "  Патот на Светлината"
-echo "==============================================="
-echo ""
+Прегледано од GPT-5.5 Thinking за Санде.
 
-cd "$(dirname "$0")"
+## Што е добро
 
-PORT=8000
+- Играта е спакувана како статичка PWA: `index.html`, `manifest.json`, `sw.js`, JavaScript модули и икони.
+- Има силен образовен идентитет: 37 нивоа, факти, пасош на знаење, Living Legacy Capsule, AI Coach.
+- Сите JavaScript фајлови поминуваат синтаксичка проверка со `node --check`.
+- PWA иконите и screenshot-ите се со точни димензии според manifest-от.
 
-# Function to open URL in default browser
-open_browser() {
-    local url=$1
-    sleep 1.5
-    if command -v xdg-open &> /dev/null; then
-        xdg-open "$url" &> /dev/null &
-    elif command -v open &> /dev/null; then
-        open "$url" &
-    elif command -v start &> /dev/null; then
-        start "$url" &
-    fi
-}
+## Поправки направени во оваа верзија
 
-# Find available port if 8000 is taken
-while nc -z localhost $PORT 2>/dev/null; do
-    PORT=$((PORT + 1))
-    if [ $PORT -gt 8010 ]; then
-        echo "❌ Сите портови 8000-8010 се зафатени!"
-        echo "   Затвори некој друг сервер и пробај пак."
-        exit 1
-    fi
-done
+1. **Критичен runtime bug во стартување на ниво**
+   - `buildLevel()` се повикуваше пред да се создаде играчот, а внатре се додаваше overlap со `this.player` додека уште е `undefined`.
+   - Поправено: endpoint overlap се додава после креирањето на играчот.
 
-URL="http://localhost:$PORT"
+2. **Избраното ниво не се пренесуваше сигурно во Phaser сцената**
+   - `sceneConfig` не е сигурен начин за стартување со `level` во оваа структура.
+   - Поправено: се користи `window.__AQ_SELECTED_LEVEL` како стабилен bridge.
 
-# === Try Python 3 ===
-if command -v python3 &> /dev/null; then
-    echo "✅ Python3 е најден!"
-    echo ""
-    echo "==============================================="
-    echo "  ИГРАТА Е НА: $URL"
-    echo "  За да ja затвориш: Ctrl+C"
-    echo "==============================================="
-    echo ""
-    open_browser "$URL"
-    python3 -m http.server $PORT
-    exit 0
-fi
+3. **Touch controls беа ризични на мобилен**
+   - Се праќаше KeyboardEvent само кон `window`, што не секогаш го чита Phaser keyboard manager.
+   - Поправено: touch-копчињата сега поставуваат `window.__AQ_TOUCH_KEYS`, а gameplay loop директно ги чита.
 
-# === Try Python 2 ===
-if command -v python &> /dev/null; then
-    echo "✅ Python е најден!"
-    echo "  ИГРАТА Е НА: $URL"
-    open_browser "$URL"
-    python -m http.server $PORT
-    exit 0
-fi
+4. **Offline cache беше неполн**
+   - Service worker-от не ги кешираше `pwa.js`, `integrations.js`, `analytics_center.js` и дел од иконите.
+   - Поправено: додадени се во app shell и cache верзијата е подигната на `v6-1`.
 
-# === Try Node.js ===
-if command -v npx &> /dev/null; then
-    echo "✅ Node.js е најден!"
-    echo "  ИГРАТА Е НА: $URL"
-    open_browser "$URL"
-    npx --yes http-server -p $PORT
-    exit 0
-fi
+5. **Заштита ако CDN библиотека не се вчита**
+   - `lucide.createIcons()` и `confetti()` сега имаат safety guard за да не падне играта ако CDN не се вчита.
 
-# === Try PHP ===
-if command -v php &> /dev/null; then
-    echo "✅ PHP е најден!"
-    echo "  ИГРАТА Е НА: $URL"
-    open_browser "$URL"
-    php -S "localhost:$PORT"
-    exit 0
-fi
+## Забелешки за пред јавно пуштање
 
-# === Try Ruby ===
-if command -v ruby &> /dev/null; then
-    echo "✅ Ruby е најден!"
-    echo "  ИГРАТА Е НА: $URL"
-    open_browser "$URL"
-    ruby -run -e httpd . -p $PORT
-    exit 0
-fi
+- Во ZIP-от што е прегледан има само игра за Александар. Посебна игра за Гоце Делчев не е присутна во оваа пратка.
+- `monetization.js` и `tracking.js` сè уште имаат placeholder клучеви (`YOUR_*`, `G-YOUR_*`). Тоа е добро за тест, но не е за production.
+- Tailwind, Phaser, Lucide, Stripe и Confetti се вчитуваат од CDN. За вистински offline PWA, најдобро е да се симнат локално или да се bundle-ираат.
+- Историските факти треба да се поминат со историчар/уредник пред јавна кампања, особено формулации како „верификувани“, „прв во светот“ и „никогаш“.
+- За деца и реклами/монетизација треба внимателна privacy/age-rating проверка пред Play Store/App Store.
 
-# === Nothing found ===
-echo ""
-echo "==============================================="
-echo "  ⚠️  ВНИМАНИЕ!"
-echo "==============================================="
-echo ""
-echo "На твојот компјутер нема инсталирано:"
-echo "  - Python"
-echo "  - Node.js"
-echo "  - PHP"
-echo "  - Ruby"
-echo ""
-echo "РЕШЕНИЈА (избери едно):"
-echo ""
-echo "  1. Инсталирај Python:"
-echo "     macOS:  brew install python3"
-echo "     Linux:  sudo apt install python3"
-echo ""
-echo "  2. Качи ја играта на GitHub Pages (бесплатно)"
-echo "     Прочитај README.md"
-echo ""
-echo "  3. Drag-and-drop на https://app.netlify.com/drop"
-echo ""
-echo "⚠️  НЕ ОТВАРАЈ ja index.html ДИРЕКТНО -"
-echo "    browser-от блокира CDN-ите од file:// протокол!"
-echo ""
-read -p "Притисни Enter за крај..."
+## Препорачана следна надградба
+
+- Да се направи посебен `content/alexander_facts.json` и `content/goce_facts.json`, за истата игра-рамка да може да вози повеќе историски мисии.
+- Да се додаде „Историски режим“ со кратка лекција пред секое ниво и quiz после секое ниво.
+- Да се додаде родител/учител панел: напредок, факти научени, сертификат PDF.
+- За Гоце Делчев: да се направи посебна мисија со теми: слобода, учителство, организација, солидарност, храброст без омраза.

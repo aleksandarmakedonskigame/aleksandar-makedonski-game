@@ -1,210 +1,134 @@
-# 👑 Мисија на Александар — Патот на Светлината v6.0
+// 👑 Мисија на Александар — Service Worker v1.0
+// Offline support, instant load, app-like experience
 
-> **Светска уникатна образовна PWA-игра.** Една игра — сите платформи: PC, Mac, Linux, Android, iPhone, iPad. Инсталирлива како native апликација. Подготвена за Play Store и App Store преку PWA Builder.
+const CACHE_NAME = 'aleksandar-v6-1';
+const RUNTIME_CACHE = 'aleksandar-runtime-v6-1';
 
-[![PWA](https://img.shields.io/badge/PWA-Ready-success?style=flat&logo=pwa)](#)
-[![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)](#)
-[![Phaser 3](https://img.shields.io/badge/Phaser-3.60-blue?style=flat)](#)
-[![Offline](https://img.shields.io/badge/Offline-Yes-success?style=flat)](#)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+// Critical app shell — cached on install
+const APP_SHELL = [
+  './',
+  './index.html',
+  './game.js',
+  './legacy.js',
+  './monetization.js',
+  './tracking.js',
+  './pwa.js',
+  './integrations.js',
+  './analytics_center.js',
+  './manifest.json',
+  './icons/icon-72.png',
+  './icons/icon-96.png',
+  './icons/icon-128.png',
+  './icons/icon-144.png',
+  './icons/icon-152.png',
+  './icons/icon-192.png',
+  './icons/icon-384.png',
+  './icons/icon-512.png',
+  './icons/apple-touch-icon.png',
+  './icons/icon-maskable-512.png',
+  './icons/favicon-16.png',
+  './icons/favicon-32.png',
+];
 
----
+// External CDN resources — cached on first request
+const RUNTIME_URLS = [
+  'https://cdn.tailwindcss.com',
+  'https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js',
+  'https://unpkg.com/lucide@latest',
+  'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js',
+  'https://fonts.googleapis.com',
+];
 
-## 📱 НОВО ВО v6.0: PWA + Multi-Platform
+// === INSTALL: precache the app shell ===
+self.addEventListener('install', event => {
+  console.log('[SW] Installing...');
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('[SW] Pre-caching app shell');
+        // Cache files individually to avoid one failure breaking everything
+        return Promise.allSettled(
+          APP_SHELL.map(url =>
+            cache.add(url).catch(err => console.warn('[SW] Failed to cache:', url, err))
+          )
+        );
+      })
+      .then(() => self.skipWaiting())
+  );
+});
 
-Сега играта работи **беспрекорно на сите уреди**:
+// === ACTIVATE: clean up old caches ===
+self.addEventListener('activate', event => {
+  console.log('[SW] Activating...');
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys
+          .filter(key => key !== CACHE_NAME && key !== RUNTIME_CACHE)
+          .map(key => {
+            console.log('[SW] Deleting old cache:', key);
+            return caches.delete(key);
+          })
+      )
+    ).then(() => self.clients.claim())
+  );
+});
 
-| Платформа | Како | Native feeling |
-|-----------|------|----------------|
-| 💻 **PC / Mac / Linux** | Browser или инсталирај од Chrome/Edge | ⭐⭐⭐⭐⭐ |
-| 📱 **Android (Chrome)** | "Add to Home screen" | ⭐⭐⭐⭐⭐ |
-| 🍎 **iPhone / iPad (Safari)** | "Add to Home Screen" | ⭐⭐⭐⭐⭐ |
-| 🤖 **Google Play Store** | Преку PWA Builder (бесплатно) | ⭐⭐⭐⭐ |
-| 🍎 **Apple App Store** | Преку Capacitor (треба Mac) | ⭐⭐⭐⭐ |
+// === FETCH: serve from cache, fall back to network ===
+self.addEventListener('fetch', event => {
+  const req = event.request;
 
-**Видови:** Прочитај `STORE_DEPLOYMENT.md` за детални упатства за сите 3 опции.
+  // Skip non-GET requests
+  if (req.method !== 'GET') return;
 
----
+  // Skip Stripe/PayPal/Analytics URLs — they should always be fresh
+  const skipDomains = ['stripe.com', 'paypal.com', 'google-analytics.com',
+                       'googletagmanager.com', 'facebook.net', 'tiktok.com'];
+  if (skipDomains.some(d => req.url.includes(d))) {
+    return;
+  }
 
-## ✨ Светски уникатни функции
+  // Strategy: Cache-first for app shell, network-first for everything else
+  const reqPath = new URL(req.url).pathname;
+  const isAppShell = APP_SHELL.some(url => {
+    const clean = url.replace(/^\.\//, '/');
+    return reqPath.endsWith(clean) || (url === './' && req.mode === 'navigate');
+  });
 
-### 🏛️ Living Legacy Capsule
-Прв систем во едукативна игра каде секој играч може да остави **своја мудрост** за идните патници. Колективен ѕид со 6 seed-цитати + неограничен простор. Без бекенд.
+  if (isAppShell) {
+    // Cache-first
+    event.respondWith(
+      caches.match(req).then(cached => cached || fetch(req).then(response => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
+        }
+        return response;
+      }))
+    );
+  } else {
+    // Network-first with cache fallback (for CDNs)
+    event.respondWith(
+      fetch(req)
+        .then(response => {
+          if (response.ok && (response.type === 'basic' || response.type === 'cors')) {
+            const clone = response.clone();
+            caches.open(RUNTIME_CACHE).then(cache => cache.put(req, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(req).then(cached => cached || new Response('', { status: 504 })))
+    );
+  }
+});
 
-### 📜 Светски Пасош на Знаењето
-Уникатен SVG пасош со 37 марки, персонализиран ID, QR-стилизиран знак. Се симнува и споделува.
-
-### ⚡ Искра на Мудрост
-37 историски факти → 37 уникатни градиент-картички. Web Share API за нативно споделување.
-
-### 👁️ Magic Eye Tracking + 🤖 AI Coach
-- Heatmap на каде гледа играчот
-- 9-делна зонска анализа
-- **AI Coach**: кога играч умре 3, 7 или 12 пати на исто ниво, Аристотел доаѓа со совет!
-
-### 📱 NEW: Native App Experience
-- Инсталирлива како native апликација
-- Работи **офлајн** (service worker)
-- Touch controls за мобилни (D-pad + skok)
-- Safe-area подршка за iPhone notch
-- Auto-detect platform (Desktop/Mobile/iOS/Android)
-- App shortcuts (long-press икона → Играј / Капсула)
-
----
-
-## 📦 Структура
-
-```
-aleksandar-makedonski-igra/
-├── index.html              # Главен HTML + PWA meta + touch controls
-├── manifest.json           # 🆕 PWA manifest (што го прави инсталирлив)
-├── sw.js                   # 🆕 Service Worker (offline support)
-├── pwa.js                  # 🆕 PWA logic: install, touch, orientation
-├── game.js                 # Phaser 3 + responsive scaling
-├── monetization.js         # 14 ad мрежи + Stripe/PayPal
-├── legacy.js               # Living Legacy (Capsule + Passport + Spark)
-├── tracking.js             # Magic Tracking + AI Coach
-├── icons/                  # 🆕 Сите PWA икони (72-512px) + screenshots
-│   ├── icon-72.png ... icon-512.png
-│   ├── apple-touch-icon.png
-│   ├── favicon-16.png, favicon-32.png
-│   └── screenshot-mobile.png, screenshot-desktop.png
-├── PRIVACY_POLICY.md       # 🆕 За Play Store / App Store
-├── TERMS.md                # 🆕 За Play Store / App Store
-├── STORE_DEPLOYMENT.md     # 🆕 Како да го качиш на сторовите
-├── PUSHI_ME.bat, pushi_me.sh
-├── KAKO_DA_IGRASH.txt
-└── README.md
-```
-
----
-
-## 🚀 Брз почеток
-
-### Локално (тестирање)
-```bash
-# Windows: двоен клик на PUSHI_ME.bat
-# Mac/Linux:
-bash pushi_me.sh
-```
-
-### Веб-деплој (за PWA да работи!)
-
-**Опција A: GitHub Pages** (бесплатно, 5 мин)
-1. Нов repo на github.com
-2. Качи ги сите фајлови
-3. Settings → Pages → main branch → Save
-4. После 1 мин: `https://username.github.io/aleksandar/`
-
-**Опција B: Netlify Drop** (бесплатно, 30 сек)
-1. Отвори https://app.netlify.com/drop
-2. Drag-and-drop ja папката
-3. Готово!
-
-**Опција C: Vercel** (бесплатно)
-```bash
-npx vercel
-```
-
----
-
-## 📱 Како се инсталира како апликација?
-
-### На Android (Chrome / Edge / Brave)
-1. Отвори ja играта во browser
-2. Притисни ⋮ (три точки) → **"Install app"**
-3. Готово! Иконата е на home screen
-
-### На iPhone / iPad (Safari ОБАВЕЗНО)
-1. Отвори ja играта во **Safari** (не Chrome!)
-2. Притисни Share (квадрат со стрелка)
-3. Скролај → **"Add to Home Screen"**
-4. Готово!
-
-### На PC / Mac (Chrome / Edge)
-1. Отвори ja играта
-2. Во address bar-от: ⊕ или 📲 икона
-3. Клик → "Install"
-
----
-
-## 🏪 За Play Store и App Store
-
-Прочитај **`STORE_DEPLOYMENT.md`** — таму е сè:
-- PWA Builder workflow за Android APK ($25 еднократно)
-- Capacitor workflow за iOS ($99/година)
-- Privacy policy template (задолжителна)
-- Marketing assets што ти требаат
-- Содржински категории и age rating
-
----
-
-## 🎮 Што има во играта?
-
-| Категорија | Содржина |
-|------------|----------|
-| **Нивоа** | 37 (3 епизоди) |
-| **Историски факти** | 37 верификувани |
-| **AI Помошници** | 4 (Аристотел, Букефал, Хефестион, Птоломеј) |
-| **Камаради** | 4 со XP и способности |
-| **Александрија Builder** | 10 згради (по Level 37) |
-| **Јазици** | Македонски + English |
-| **Социјално** | 16 платформи |
-| **Аналитика** | GA4, FB Pixel, TikTok, X, Eye Tracking |
-| **Платформи** | PWA на сите OS-и |
-| **Контроли** | Tastatura + Touch + Gamepad (Phaser) |
-
----
-
-## 🔧 Пред живо лансирање
-
-### Замени placeholder клучеви
-
-**`monetization.js`:**
-```js
-config: { stripeKey: 'pk_live_...', paypalClientId: '...' }
-```
-
-**`tracking.js`:**
-```js
-config: { googleAnalyticsId: 'G-...', facebookPixelId: '...' }
-```
-
-### Тестирај PWA пред пуштање
-
-1. Отвори ja играта на HTTPS URL
-2. Chrome DevTools → Application → Manifest
-3. Application → Service Workers (треба да биде "activated")
-4. Lighthouse → PWA score треба да биде 90+
-
----
-
-## 📜 Лиценца
-
-MIT License — за лична, образовна и комерцијална употреба со атрибуција.
-
----
-
-## 🏛️ За авторот
-
-**World Protocol Academy** — образовна донација за идните генерации.
-
-**Контакт:** aleksandarmakedonskigame@gmail.com
-**Web:** worldprotocolacademy.com | ohridprotocol.org
-
----
-
-## 📊 Историја на верзии
-
-- **v6.0** (Мај 2026) — PWA + Multi-platform + Touch controls + Store-ready
-- **v5.0** — Magic Eye Tracking + AI Coach
-- **v4.0** — Living Legacy Capsule
-- **v3.0** — 37 нивоа + камаради + Александрија
-- **v2.0** — AI агенти + социјално
-- **v1.0** — Phaser 3 база
-
----
-
-⭐ **Ако ти се допаѓа играта, дај звезда на repo-то!**
-
-> *"Светот е книга, а оние кои патуваат читаат повеќе страници."* — Александар
+// === MESSAGE: allow manual cache clearing from app ===
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  if (event.data && event.data.type === 'CLEAR_CACHE') {
+    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+      .then(() => event.ports[0]?.postMessage({ cleared: true }));
+  }
+});

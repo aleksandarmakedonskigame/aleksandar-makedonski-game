@@ -1031,9 +1031,13 @@ function updateToggle(key,val){
   el.innerHTML=`<div class="absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${val?'right-1':'left-1'}"></div>`;
 }
 function setLang(l){
-  state.lang=l;saveState(state);
-  document.getElementById('lang-mk').className=l==='mk'?'flex-1 py-2 rounded-lg border-2 border-yellow-500 bg-yellow-500/10 text-yellow-400 text-sm font-medium':'flex-1 py-2 rounded-lg border-2 border-white/10 text-[#FFF8E7]/50 text-sm font-medium hover:border-yellow-600/40';
-  document.getElementById('lang-en').className=l==='en'?'flex-1 py-2 rounded-lg border-2 border-yellow-500 bg-yellow-500/10 text-yellow-400 text-sm font-medium':'flex-1 py-2 rounded-lg border-2 border-white/10 text-[#FFF8E7]/50 text-sm font-medium hover:border-yellow-600/40';
+  // Public clean build: Macedonian is the default interface.
+  state.lang = 'mk';
+  saveState(state);
+  const mk = document.getElementById('lang-mk');
+  const en = document.getElementById('lang-en');
+  if (mk) mk.className = 'flex-1 py-2 rounded-lg border-2 border-yellow-500 bg-yellow-500/10 text-yellow-400 text-sm font-medium';
+  if (en) en.className = 'flex-1 py-2 rounded-lg border-2 border-white/10 text-[#FFF8E7]/50 text-sm font-medium hover:border-yellow-600/40';
 }
 function resetProgress(){
   if(!confirm('Дали си сигурен? Целиот прогрес ќе биде избришан!'))return;
