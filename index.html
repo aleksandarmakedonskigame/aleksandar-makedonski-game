@@ -60,6 +60,56 @@
 .screen { display: none !important; }
 .screen.active { display: block !important; }
 .hidden { display: none !important; }
+
+/* FORCE CENTER FIX v1.1.2 — keeps screens hidden but centers menu/instructions */
+#screen-menu.active {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+}
+#screen-menu > div {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+#screen-instructions.active {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  min-height: 100vh !important;
+  padding: 32px 16px !important;
+  text-align: center !important;
+}
+#screen-instructions .instructions-card {
+  width: min(100%, 1040px) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  text-align: center !important;
+}
+#screen-instructions .instructions-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 20px !important;
+}
+#screen-instructions .instruction-box,
+#screen-instructions .controls-box,
+#screen-instructions .tips-box,
+#screen-instructions .goal-box {
+  text-align: center !important;
+}
+#screen-instructions ul {
+  display: inline-block !important;
+  text-align: left !important;
+}
+@media (max-width: 768px) {
+  #screen-instructions.active {
+    padding: 20px 12px !important;
+  }
+  #screen-instructions .instructions-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',sans-serif;background:#0F0C18;color:#FFF8E7;overflow-x:hidden}
 .font-cinzel{font-family:'Cinzel Decorative',serif}
@@ -623,7 +673,7 @@ button, .game-btn, .game-btn-sm, .level-dot, .social-btn {
 <!-- ========== INSTRUCTIONS / HOW TO PLAY ========== -->
 <div id="screen-instructions" class="screen min-h-screen relative z-10">
   <div class="min-h-screen w-full flex justify-center items-start px-4 py-8 md:py-10">
-    <div class="w-full max-w-5xl mx-auto bg-black/30 border border-yellow-500/20 rounded-3xl shadow-2xl p-5 md:p-10">
+    <div class="instructions-card w-full max-w-5xl mx-auto bg-black/30 border border-yellow-500/20 rounded-3xl shadow-2xl p-5 md:p-10">
 
       <div class="flex items-center justify-between gap-3 mb-6">
         <button onclick="showScreen('menu')" class="game-btn-sm">
@@ -644,7 +694,7 @@ button, .game-btn, .game-btn-sm, .level-dot, .social-btn {
         </p>
       </div>
 
-      <div class="bg-white/5 border border-yellow-500/20 rounded-2xl p-5 mb-6 text-center md:text-left">
+      <div class="goal-box bg-white/5 border border-yellow-500/20 rounded-2xl p-5 mb-6 text-center">
         <h3 class="text-yellow-400 font-bold text-xl mb-2">🎯 Цел на играта</h3>
         <p class="text-[#FFF8E7]/75 text-sm md:text-base leading-relaxed">
           Твојата цел е да ги поминеш нивоата, да собереш монети и свитоци на знаење,
@@ -652,8 +702,8 @@ button, .game-btn, .game-btn-sm, .level-dot, .social-btn {
         </p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-left">
-        <div class="bg-blue-500/10 border border-blue-500/25 rounded-2xl p-5">
+      <div class="instructions-grid grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="instruction-box bg-blue-500/10 border border-blue-500/25 rounded-2xl p-5">
           <div class="text-3xl mb-2">1️⃣</div>
           <h3 class="text-xl font-bold text-blue-300 mb-2">Започни игра</h3>
           <p class="text-[#FFF8E7]/75 text-sm md:text-base">
@@ -661,7 +711,7 @@ button, .game-btn, .game-btn-sm, .level-dot, .social-btn {
           </p>
         </div>
 
-        <div class="bg-purple-500/10 border border-purple-500/25 rounded-2xl p-5">
+        <div class="instruction-box bg-purple-500/10 border border-purple-500/25 rounded-2xl p-5">
           <div class="text-3xl mb-2">2️⃣</div>
           <h3 class="text-xl font-bold text-purple-300 mb-2">Движи се</h3>
           <p class="text-[#FFF8E7]/75 text-sm md:text-base">
@@ -669,7 +719,7 @@ button, .game-btn, .game-btn-sm, .level-dot, .social-btn {
           </p>
         </div>
 
-        <div class="bg-green-500/10 border border-green-500/25 rounded-2xl p-5">
+        <div class="instruction-box bg-green-500/10 border border-green-500/25 rounded-2xl p-5">
           <div class="text-3xl mb-2">3️⃣</div>
           <h3 class="text-xl font-bold text-green-300 mb-2">Скокај</h3>
           <p class="text-[#FFF8E7]/75 text-sm md:text-base">
@@ -677,7 +727,7 @@ button, .game-btn, .game-btn-sm, .level-dot, .social-btn {
           </p>
         </div>
 
-        <div class="bg-yellow-500/10 border border-yellow-500/25 rounded-2xl p-5">
+        <div class="instruction-box bg-yellow-500/10 border border-yellow-500/25 rounded-2xl p-5">
           <div class="text-3xl mb-2">4️⃣</div>
           <h3 class="text-xl font-bold text-yellow-300 mb-2">Собирај монети</h3>
           <p class="text-[#FFF8E7]/75 text-sm md:text-base">
@@ -685,7 +735,7 @@ button, .game-btn, .game-btn-sm, .level-dot, .social-btn {
           </p>
         </div>
 
-        <div class="bg-orange-500/10 border border-orange-500/25 rounded-2xl p-5">
+        <div class="instruction-box bg-orange-500/10 border border-orange-500/25 rounded-2xl p-5">
           <div class="text-3xl mb-2">5️⃣</div>
           <h3 class="text-xl font-bold text-orange-300 mb-2">Најди свитоци</h3>
           <p class="text-[#FFF8E7]/75 text-sm md:text-base">
@@ -693,7 +743,7 @@ button, .game-btn, .game-btn-sm, .level-dot, .social-btn {
           </p>
         </div>
 
-        <div class="bg-red-500/10 border border-red-500/25 rounded-2xl p-5">
+        <div class="instruction-box bg-red-500/10 border border-red-500/25 rounded-2xl p-5">
           <div class="text-3xl mb-2">6️⃣</div>
           <h3 class="text-xl font-bold text-red-300 mb-2">Стигни до крајот</h3>
           <p class="text-[#FFF8E7]/75 text-sm md:text-base">
@@ -702,7 +752,7 @@ button, .game-btn, .game-btn-sm, .level-dot, .social-btn {
         </div>
       </div>
 
-      <div class="mt-8 bg-yellow-500/10 border border-yellow-500/25 rounded-2xl p-5 text-center">
+      <div class="controls-box mt-8 bg-yellow-500/10 border border-yellow-500/25 rounded-2xl p-5 text-center">
         <h3 class="text-2xl font-bold text-yellow-400 mb-4">⌨️ Контроли</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
           <div class="bg-black/25 rounded-xl p-4 border border-white/10">
@@ -726,8 +776,8 @@ button, .game-btn, .game-btn-sm, .level-dot, .social-btn {
         </div>
       </div>
 
-      <div class="mt-8 bg-white/5 border border-white/10 rounded-2xl p-5">
-        <h3 class="text-yellow-400 font-bold text-xl mb-3 text-center md:text-left">💡 Совети</h3>
+      <div class="tips-box mt-8 bg-white/5 border border-white/10 rounded-2xl p-5">
+        <h3 class="text-yellow-400 font-bold text-xl mb-3 text-center">💡 Совети</h3>
         <ul class="text-[#FFF8E7]/75 text-sm md:text-base space-y-2 list-disc pl-5">
           <li>Не брзај — прво види каде се платформите.</li>
           <li>Пробај да собереш што повеќе монети.</li>
