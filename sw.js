@@ -1,134 +1,157 @@
-// 👑 Мисија на Александар — Service Worker v1.0
-// Offline support, instant load, app-like experience
+// ============================================================
+// МИСИЈА НА АЛЕКСАНДАР — SAFE SERVICE WORKER
+// GitHub Pages / PWA safe cache
+// Fixes chrome-extension cache errors
+// ============================================================
 
-const CACHE_NAME = 'aleksandar-v6-1';
-const RUNTIME_CACHE = 'aleksandar-runtime-v6-1';
+const CACHE_VERSION = 'alexander-quest-cache-v3';
+const APP_SCOPE = '/aleksandar-makedonski-game/';
 
-// Critical app shell — cached on install
-const APP_SHELL = [
+const CORE_ASSETS = [
   './',
   './index.html',
   './game.js',
   './legacy.js',
-  './monetization.js',
-  './tracking.js',
   './pwa.js',
-  './integrations.js',
-  './analytics_center.js',
   './manifest.json',
-  './icons/icon-72.png',
-  './icons/icon-96.png',
-  './icons/icon-128.png',
-  './icons/icon-144.png',
-  './icons/icon-152.png',
-  './icons/icon-192.png',
-  './icons/icon-384.png',
-  './icons/icon-512.png',
-  './icons/apple-touch-icon.png',
-  './icons/icon-maskable-512.png',
-  './icons/favicon-16.png',
-  './icons/favicon-32.png',
+  './favicon-16.png',
+  './favicon-32.png',
+  './icon-96.png',
+  './icon-128.png',
+  './icon-192.png',
+  './icon-384.png',
+  './icon-512.png',
+  './apple-touch-icon.png'
 ];
 
-// External CDN resources — cached on first request
-const RUNTIME_URLS = [
-  'https://cdn.tailwindcss.com',
-  'https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js',
-  'https://unpkg.com/lucide@latest',
-  'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js',
-  'https://fonts.googleapis.com',
-];
-
-// === INSTALL: precache the app shell ===
+// ------------------------------------------------------------
+// INSTALL
+// ------------------------------------------------------------
 self.addEventListener('install', event => {
-  console.log('[SW] Installing...');
+  self.skipWaiting();
+
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('[SW] Pre-caching app shell');
-        // Cache files individually to avoid one failure breaking everything
-        return Promise.allSettled(
-          APP_SHELL.map(url =>
-            cache.add(url).catch(err => console.warn('[SW] Failed to cache:', url, err))
-          )
-        );
-      })
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_VERSION).then(cache => {
+      return cache.addAll(
+        CORE_ASSETS.map(asset => new Request(asset, { cache: 'reload' }))
+      ).catch(error => {
+        console.warn('[SW] Some core assets failed to cache:', error);
+      });
+    })
   );
 });
 
-// === ACTIVATE: clean up old caches ===
+// ------------------------------------------------------------
+// ACTIVATE
+// ------------------------------------------------------------
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating...');
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
+    caches.keys().then(keys => {
+      return Promise.all(
         keys
-          .filter(key => key !== CACHE_NAME && key !== RUNTIME_CACHE)
-          .map(key => {
-            console.log('[SW] Deleting old cache:', key);
-            return caches.delete(key);
-          })
-      )
-    ).then(() => self.clients.claim())
+          .filter(key => key !== CACHE_VERSION)
+          .map(key => caches.delete(key))
+      );
+    }).then(() => {
+      return self.clients.claim();
+    })
   );
 });
 
-// === FETCH: serve from cache, fall back to network ===
+// ------------------------------------------------------------
+// FETCH — SAFE VERSION
+// ------------------------------------------------------------
 self.addEventListener('fetch', event => {
-  const req = event.request;
+  const request = event.request;
 
-  // Skip non-GET requests
-  if (req.method !== 'GET') return;
-
-  // Skip Stripe/PayPal/Analytics URLs — they should always be fresh
-  const skipDomains = ['stripe.com', 'paypal.com', 'google-analytics.com',
-                       'googletagmanager.com', 'facebook.net', 'tiktok.com'];
-  if (skipDomains.some(d => req.url.includes(d))) {
+  // Only handle GET requests
+  if (!request || request.method !== 'GET') {
     return;
   }
 
-  // Strategy: Cache-first for app shell, network-first for everything else
-  const reqPath = new URL(req.url).pathname;
-  const isAppShell = APP_SHELL.some(url => {
-    const clean = url.replace(/^\.\//, '/');
-    return reqPath.endsWith(clean) || (url === './' && req.mode === 'navigate');
-  });
-
-  if (isAppShell) {
-    // Cache-first
-    event.respondWith(
-      caches.match(req).then(cached => cached || fetch(req).then(response => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
-        }
-        return response;
-      }))
-    );
-  } else {
-    // Network-first with cache fallback (for CDNs)
-    event.respondWith(
-      fetch(req)
-        .then(response => {
-          if (response.ok && (response.type === 'basic' || response.type === 'cors')) {
-            const clone = response.clone();
-            caches.open(RUNTIME_CACHE).then(cache => cache.put(req, clone));
-          }
-          return response;
-        })
-        .catch(() => caches.match(req).then(cached => cached || new Response('', { status: 504 })))
-    );
+  let requestUrl;
+  try {
+    requestUrl = new URL(request.url);
+  } catch (error) {
+    return;
   }
+
+  // Never cache unsupported schemes:
+  // chrome-extension://, data:, blob:, file:, devtools:, etc.
+  if (requestUrl.protocol !== 'http:' && requestUrl.protocol !== 'https:') {
+    return;
+  }
+
+  // Avoid caching browser extensions and devtools requests
+  if (
+    requestUrl.protocol === 'chrome-extension:' ||
+    requestUrl.hostname.includes('extension')
+  ) {
+    return;
+  }
+
+  event.respondWith(
+    caches.match(request).then(cachedResponse => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      return fetch(request).then(networkResponse => {
+        // Return immediately if response is not valid for cache
+        if (
+          !networkResponse ||
+          networkResponse.status !== 200 ||
+          request.method !== 'GET'
+        ) {
+          return networkResponse;
+        }
+
+        // Do not cache opaque CDN responses or extension-like requests
+        if (networkResponse.type === 'opaque') {
+          return networkResponse;
+        }
+
+        const responseClone = networkResponse.clone();
+
+        caches.open(CACHE_VERSION).then(cache => {
+          cache.put(request, responseClone).catch(error => {
+            console.warn('[SW] Cache put skipped:', error);
+          });
+        }).catch(error => {
+          console.warn('[SW] Cache open failed:', error);
+        });
+
+        return networkResponse;
+      }).catch(() => {
+        // Offline fallback only for navigation/page requests
+        if (request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+
+        return new Response('', {
+          status: 503,
+          statusText: 'Offline'
+        });
+      });
+    })
+  );
 });
 
-// === MESSAGE: allow manual cache clearing from app ===
+// ------------------------------------------------------------
+// MESSAGE HANDLER — allow manual cache clear from pwa.js/devtools
+// ------------------------------------------------------------
 self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  if (!event.data) return;
+
+  if (event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
-  if (event.data && event.data.type === 'CLEAR_CACHE') {
-    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
-      .then(() => event.ports[0]?.postMessage({ cleared: true }));
+
+  if (event.data.type === 'CLEAR_CACHE') {
+    event.waitUntil(
+      caches.keys().then(keys => {
+        return Promise.all(keys.map(key => caches.delete(key)));
+      })
+    );
   }
 });
