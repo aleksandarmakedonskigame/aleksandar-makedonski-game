@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-<title>Мисија на Александар v1.7 — Full Gameplay Revision</title>
+<title>Мисија на Александар v1.7.1 — Dynamic Cache Fix</title>
 
 <!-- PWA MANIFEST -->
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.json?v=1.7.1">
 
 <!-- PWA THEME -->
 <meta name="theme-color" content="#FFD700">
@@ -300,6 +300,23 @@ button, .game-btn, .game-btn-sm, .level-dot, .social-btn {
 /* Improve scroll on mobile */
 * { -webkit-overflow-scrolling: touch; }
 </style>
+
+<script>
+window.AQ_BUILD_VERSION = '1.7.1';
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){
+    var box = document.querySelector('#screen-menu .mb-8');
+    if(box && !document.getElementById('aq171-cache-marker')){
+      var b = document.createElement('div');
+      b.id = 'aq171-cache-marker';
+      b.style.cssText = 'display:inline-block;margin-top:8px;padding:8px 14px;border-radius:999px;border:1px solid rgba(74,144,226,.55);background:rgba(74,144,226,.12);color:#9fd0ff;font-size:12px;font-weight:900';
+      b.textContent = '✅ v1.7.1 активна · нова динамична верзија вчитана';
+      box.appendChild(b);
+    }
+  }, 900);
+});
+</script>
+
 </head>
 <body class="min-h-screen">
 
@@ -1572,17 +1589,17 @@ button, .game-btn, .game-btn-sm, .level-dot, .social-btn {
   <span>📲</span> Инсталирај го Александар
 </button>
 
-<script src="monetization.js"></script>
-<script src="tracking.js"></script>
-<script src="sounds.js"></script>
-<script src="security.js"></script>
-<script src="legacy.js"></script>
-<script src="game.js"></script>
-<script src="v13_world_protocol.js"></script>
-<script src="v14_world_unique.js"></script>
-<script src="v15_dynamic_gameplay.js"></script>
-<script src="v16_player_identity_flags.js"></script>
-<script src="v17_rhythm_identity.js"></script>
-<script src="pwa.js"></script>
+<script src="monetization.js?v=1.7.1"></script>
+<script src="tracking.js?v=1.7.1"></script>
+<script src="sounds.js?v=1.7.1"></script>
+<script src="security.js?v=1.7.1"></script>
+<script src="legacy.js?v=1.7.1"></script>
+<script src="game.js?v=1.7.1"></script>
+<script src="v13_world_protocol.js?v=1.7.1"></script>
+<script src="v14_world_unique.js?v=1.7.1"></script>
+<script src="v15_dynamic_gameplay.js?v=1.7.1"></script>
+<script src="v16_player_identity_flags.js?v=1.7.1"></script>
+<script src="v17_rhythm_identity.js?v=1.7.1"></script>
+<script src="pwa.js?v=1.7.1"></script>
 </body>
 </html>
