@@ -3,19 +3,20 @@
 // Network-first for HTML/JS so old game code does not stay cached.
 // ============================================================
 
-const CACHE_NAME = 'alexander-quest-v1-7-1';
+const CACHE_NAME = 'alexander-quest-v1-8';
 const CORE_ASSETS = [
   './',
-  './index.html?v=1.7.1',
-  './game.js?v=1.7.1',
-  './legacy.js?v=1.7.1',
-  './pwa.js?v=1.7.1',
-  './v13_world_protocol.js?v=1.7.1',
-  './v14_world_unique.js?v=1.7.1',
-  './v15_dynamic_gameplay.js?v=1.7.1',
-  './v16_player_identity_flags.js?v=1.7.1',
-  './v17_rhythm_identity.js?v=1.7.1',
-  './manifest.json?v=1.7.1'
+  './index.html?v=1.8',
+  './game.js?v=1.8',
+  './legacy.js?v=1.8',
+  './pwa.js?v=1.8',
+  './v13_world_protocol.js?v=1.8',
+  './v14_world_unique.js?v=1.8',
+  './v15_dynamic_gameplay.js?v=1.8',
+  './v16_player_identity_flags.js?v=1.8',
+  './v17_rhythm_identity.js?v=1.8',
+  './v18_proactive_agents.js?v=1.8',
+  './manifest.json?v=1.8'
 ];
 
 self.addEventListener('install', event => {
@@ -54,7 +55,7 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE_NAME).then(cache => cache.put(request, copy).catch(() => null));
           return response;
         })
-        .catch(() => caches.match(request).then(cached => cached || caches.match('./index.html?v=1.7.1')))
+        .catch(() => caches.match(request).then(cached => cached || caches.match('./index.html?v=1.8')))
     );
     return;
   }

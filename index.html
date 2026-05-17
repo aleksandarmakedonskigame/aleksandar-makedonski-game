@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-<title>Мисија на Александар v1.7.1 — Dynamic Cache Fix</title>
+<title>Мисија на Александар v1.8 — Proactive AI Agents</title>
 
 <!-- PWA MANIFEST -->
 <link rel="manifest" href="manifest.json?v=1.7.1">
@@ -314,6 +314,22 @@ document.addEventListener('DOMContentLoaded', function(){
       box.appendChild(b);
     }
   }, 900);
+});
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){
+    var box = document.querySelector('#screen-menu .mb-8');
+    if(box && !document.getElementById('aq18-build-marker')){
+      var b = document.createElement('div');
+      b.id = 'aq18-build-marker';
+      b.style.cssText = 'display:inline-block;margin-top:8px;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,215,0,.45);background:rgba(255,215,0,.10);color:#FFD700;font-size:12px;font-weight:900';
+      b.textContent = '🤖 v1.8 активна · проактивни AI задачи';
+      box.appendChild(b);
+    }
+  }, 1000);
 });
 </script>
 
@@ -1594,12 +1610,13 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="sounds.js?v=1.7.1"></script>
 <script src="security.js?v=1.7.1"></script>
 <script src="legacy.js?v=1.7.1"></script>
-<script src="game.js?v=1.7.1"></script>
+<script src="game.js?v=1.8"></script>
 <script src="v13_world_protocol.js?v=1.7.1"></script>
 <script src="v14_world_unique.js?v=1.7.1"></script>
 <script src="v15_dynamic_gameplay.js?v=1.7.1"></script>
 <script src="v16_player_identity_flags.js?v=1.7.1"></script>
-<script src="v17_rhythm_identity.js?v=1.7.1"></script>
-<script src="pwa.js?v=1.7.1"></script>
+<script src="v17_rhythm_identity.js?v=1.8"></script>
+<script src="v18_proactive_agents.js?v=1.8"></script>
+<script src="pwa.js?v=1.8"></script>
 </body>
 </html>
