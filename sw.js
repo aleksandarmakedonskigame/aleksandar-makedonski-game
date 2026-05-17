@@ -3,21 +3,22 @@
 // Network-first for HTML/JS so old game code does not stay cached.
 // ============================================================
 
-const CACHE_NAME = 'alexander-quest-v1-8-2';
+const CACHE_NAME = 'alexander-quest-v1-8-3';
 const CORE_ASSETS = [
   './',
-  './index.html?v=1.8.2',
-  './game.js?v=1.8.2',
-  './legacy.js?v=1.8.2',
-  './pwa.js?v=1.8.2',
-  './v13_world_protocol.js?v=1.8.2',
-  './v14_world_unique.js?v=1.8.2',
-  './v15_dynamic_gameplay.js?v=1.8.2',
-  './v16_player_identity_flags.js?v=1.8.2',
-  './v17_rhythm_identity.js?v=1.8.2',
-  './v18_proactive_agents.js?v=1.8.2',
-  './v181_clean_buttons.js?v=1.8.2',
-  './manifest.json?v=1.8.2'
+  './index.html?v=1.8.3',
+  './game.js?v=1.8.3',
+  './legacy.js?v=1.8.3',
+  './pwa.js?v=1.8.3',
+  './v13_world_protocol.js?v=1.8.3',
+  './v14_world_unique.js?v=1.8.3',
+  './v15_dynamic_gameplay.js?v=1.8.3',
+  './v16_player_identity_flags.js?v=1.8.3',
+  './v17_rhythm_identity.js?v=1.8.3',
+  './v18_proactive_agents.js?v=1.8.3',
+  './v181_clean_buttons.js?v=1.8.3',
+  './v183_level4_rescue_overlay.js?v=1.8.3',
+  './manifest.json?v=1.8.3'
 ];
 
 self.addEventListener('install', event => {
@@ -56,7 +57,7 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE_NAME).then(cache => cache.put(request, copy).catch(() => null));
           return response;
         })
-        .catch(() => caches.match(request).then(cached => cached || caches.match('./index.html?v=1.8.2')))
+        .catch(() => caches.match(request).then(cached => cached || caches.match('./index.html?v=1.8.3')))
     );
     return;
   }
