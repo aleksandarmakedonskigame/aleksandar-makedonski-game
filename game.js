@@ -1,5 +1,5 @@
 // ============================================================
-// ALEXANDER'S QUEST - THE PATH OF LIGHT — v1.7 FULL GAMEPLAY REVISION
+// ALEXANDER'S QUEST - THE PATH OF LIGHT — v1.8.2 LEVEL 4 LIGHT FIX
 // 37 Levels, 4 AI Agents, Stripe/PayPal, Social Networks
 // Macedonian & English | LocalStorage Progress
 // ============================================================
@@ -361,12 +361,20 @@ class GameplayScene extends Phaser.Scene {
     this.cameras.main.setBounds(0,0,3000,500);
     this.physics.world.setBounds(0,0,3000,500);
 
-    // Stars bg
+    // Stars bg — v1.8.2: keep old dark layer behind everything, not on top of dynamic world
     const g=this.add.graphics();
     g.fillGradientStyle(0x0F0C18,0x0F0C18,0x1A1525,0x1A1525,1);
     g.fillRect(0,0,3000,500);
+    g.setDepth(-100);
     for(let i=0;i<80;i++){
-      this.add.circle(Phaser.Math.Between(0,3000),Phaser.Math.Between(0,400),Phaser.Math.FloatBetween(0.5,1.5),0xFFD700,Phaser.Math.FloatBetween(0.1,0.4));
+      const tinyStar=this.add.circle(
+        Phaser.Math.Between(0,3000),
+        Phaser.Math.Between(0,400),
+        Phaser.Math.FloatBetween(0.5,1.5),
+        0xFFD700,
+        Phaser.Math.FloatBetween(0.1,0.4)
+      );
+      tinyStar.setDepth(-90);
     }
 
     this.platforms=this.physics.add.staticGroup();
@@ -530,6 +538,44 @@ class GameplayScene extends Phaser.Scene {
       sign.setDepth(2);
       sign.setAlpha(0.65);
     }
+
+    // v1.8.2: visible start-zone scenery so level 4 and all levels never start as empty darkness.
+    const startGlow=this.add.graphics();
+    startGlow.fillStyle(0xFFD700,0.10);
+    startGlow.fillCircle(135,350,90);
+    startGlow.fillStyle(0x4A90E2,0.08);
+    startGlow.fillCircle(220,300,70);
+    startGlow.setDepth(-3);
+
+    const startText=this.add.text(95,160,'Патот е жив — следи ја светлината', {
+      fontSize:'18px',
+      color:'#FFD700',
+      fontFamily:'Inter',
+      fontStyle:'bold',
+      stroke:'#0F0C18',
+      strokeThickness:4
+    });
+    startText.setDepth(6);
+    startText.setAlpha(0.86);
+    this.tweens.add({targets:startText,alpha:0.45,duration:1400,yoyo:true,repeat:-1});
+
+    // Level 4 gets extra visible identity: Meteors / stars / ruins from the first screen.
+    if(l===4){
+      const title=this.add.text(130,105,'Ниво 4 · Небесни Знаци', {
+        fontSize:'24px',
+        color:'#9fd0ff',
+        fontFamily:'Cinzel Decorative',
+        stroke:'#0F0C18',
+        strokeThickness:5
+      });
+      title.setDepth(7);
+      const glow=this.add.graphics();
+      glow.fillStyle(0x4A90E2,0.16);
+      glow.fillCircle(420,120,120);
+      glow.fillStyle(0xFFD700,0.12);
+      glow.fillCircle(580,190,85);
+      glow.setDepth(-2);
+    }
   }
 
   addDynamicGameplay(l){
@@ -542,6 +588,33 @@ class GameplayScene extends Phaser.Scene {
       st.setDepth(10);
       st.setData('kind','star');
       this.tweens.add({targets:st,y:y-8,angle:360,duration:1400+Phaser.Math.Between(0,700),yoyo:true,repeat:-1,ease:'Sine.InOut'});
+    }
+
+    // v1.8.2: guaranteed visible collectibles in the first camera view
+    const firstStarPositions = [
+      [210, 330], [295, 290], [380, 250], [465, 310]
+    ];
+    firstStarPositions.forEach((pos, idx)=>{
+      const st=this.dynamicStarGroup.create(pos[0],pos[1],'dyn_star');
+      st.setDepth(14);
+      st.setData('kind','start-star');
+      this.tweens.add({targets:st,y:pos[1]-10,angle:360,duration:1200+idx*160,yoyo:true,repeat:-1,ease:'Sine.InOut'});
+    });
+
+    // v1.8.2: first super-jump orb is visible early, so player immediately feels a power-up.
+    const firstOrb=this.dynamicPowerGroup.create(560,300,'dyn_orb');
+    firstOrb.setDepth(15);
+    firstOrb.setData('kind','start-superjump');
+    this.tweens.add({targets:firstOrb,scale:1.22,alpha:0.72,duration:780,yoyo:true,repeat:-1});
+
+    // v1.8.2: level 4 special first-screen meteor, high enough to be visible but fair.
+    if(l===4){
+      const m=this.dynamicMeteorGroup.create(640,80,'dyn_meteor');
+      m.body.allowGravity=false;
+      m.setDepth(16);
+      m.setVelocity(-15,95);
+      m.setData('baseX',640);
+      m.setData('lastHit',0);
     }
 
     // Obstacles start early, but stay fair
@@ -1563,3 +1636,6 @@ window.onload=function(){
     }
   }
 };
+
+window.AQ_GAME_BUILD_VERSION='1.8.2';
+console.log('[AQ Game] v1.8.2 Level 4 Light Fix loaded');
