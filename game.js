@@ -1,5 +1,5 @@
 // ============================================================
-// ALEXANDER'S QUEST - THE PATH OF LIGHT
+// ALEXANDER'S QUEST - THE PATH OF LIGHT — v1.7 FULL GAMEPLAY REVISION
 // 37 Levels, 4 AI Agents, Stripe/PayPal, Social Networks
 // Macedonian & English | LocalStorage Progress
 // ============================================================
@@ -115,6 +115,9 @@ function getState() {
     kingdomBuildings: [],
     kingdomCoins: 0,
     kingdomLevel: 1,
+    wisdomPoints: 0,
+    playerFlag: '',
+    playerCountryName: '',
   };
 }
 
@@ -171,7 +174,7 @@ function updateMenu() {
     const totalStars = Object.values(state.levelStars).reduce((a,b)=>a+b,0);
     document.getElementById('stat-stars').textContent = totalStars;
   }
-  document.getElementById('player-name').textContent = state.playerName;
+  document.getElementById('player-name').textContent = (state.playerFlag ? state.playerFlag + ' ' : '') + (state.playerName || 'Гостин');
 }
 
 // ========== LEVEL SELECT ==========
@@ -313,9 +316,47 @@ class GameplayScene extends Phaser.Scene {
     eg.fillStyle(0xFFD700,1);eg.fillRoundedRect(0,0,36,50,4);
     eg.fillStyle(0xFFFFFF,0.6);eg.fillCircle(18,25,10);
     eg.generateTexture('end',36,50);
+
+    // v1.7 Dynamic textures: stars, meteors, obstacles, super power orb, landmarks
+    const starG=this.make.graphics({x:0,y:0,add:false});
+    starG.fillStyle(0xFFD700,1);
+    const starPts=[];
+    for(let i=0;i<10;i++){
+      const a=-Math.PI/2+i*Math.PI/5;
+      const r=i%2===0?14:6;
+      starPts.push(new Phaser.Geom.Point(16+Math.cos(a)*r,16+Math.sin(a)*r));
+    }
+    starG.fillPoints(starPts,true);
+    starG.lineStyle(1,0xFFF8E7,0.7); starG.strokePoints(starPts,true);
+    starG.generateTexture('dyn_star',32,32);
+
+    const fireG=this.make.graphics({x:0,y:0,add:false});
+    fireG.fillStyle(0x8B2E19,1); fireG.fillTriangle(18,0,2,42,34,42);
+    fireG.fillStyle(0xFF6B35,1); fireG.fillTriangle(18,8,7,43,29,43);
+    fireG.fillStyle(0xFFD700,1); fireG.fillTriangle(18,18,12,43,24,43);
+    fireG.fillStyle(0x3D2A1F,1); fireG.fillRect(3,42,32,8);
+    fireG.generateTexture('dyn_fire',36,52);
+
+    const meteorG=this.make.graphics({x:0,y:0,add:false});
+    meteorG.fillStyle(0xFF6B35,1); meteorG.fillCircle(18,18,14);
+    meteorG.fillStyle(0xFFD700,1); meteorG.fillCircle(13,13,5);
+    meteorG.lineStyle(4,0xFFA500,0.65); meteorG.lineBetween(2,4,27,29);
+    meteorG.generateTexture('dyn_meteor',38,38);
+
+    const orbG=this.make.graphics({x:0,y:0,add:false});
+    orbG.fillStyle(0x4A90E2,0.9); orbG.fillCircle(20,20,18);
+    orbG.fillStyle(0xFFD700,0.95); orbG.fillCircle(20,20,8);
+    orbG.lineStyle(2,0xFFF8E7,0.7); orbG.strokeCircle(20,20,18);
+    orbG.generateTexture('dyn_orb',40,40);
+
+    const pillarG=this.make.graphics({x:0,y:0,add:false});
+    pillarG.fillStyle(0xBFA66A,0.9); pillarG.fillRect(8,8,28,70);
+    pillarG.fillStyle(0xD9C27A,0.9); pillarG.fillRect(2,0,40,12); pillarG.fillRect(2,76,40,10);
+    pillarG.generateTexture('dyn_pillar',44,88);
   }
 
   create() {
+    currentScene = this;
     this.cameras.main.setBackgroundColor('#1a1525');
     this.cameras.main.setBounds(0,0,3000,500);
     this.physics.world.setBounds(0,0,3000,500);
@@ -333,8 +374,20 @@ class GameplayScene extends Phaser.Scene {
     this.scrollGroup=this.physics.add.group({allowGravity:false});
     this.cpGroup=this.physics.add.group({allowGravity:false});
 
+    // v1.7 Dynamic groups
+    this.dynamicStarGroup=this.physics.add.group({allowGravity:false});
+    this.dynamicHazardGroup=this.physics.add.staticGroup();
+    this.dynamicPowerGroup=this.physics.add.group({allowGravity:false});
+    this.dynamicMeteorGroup=this.physics.add.group({allowGravity:false});
+    this.dynamicFalls=0;
+    this.superJumpUntil=0;
+    this.dynamicStarsCollected=0;
+
     // Build level
     this.buildLevel(this.lvl);
+    this.decorateDynamicWorld(this.lvl);
+    this.addDynamicGameplay(this.lvl);
+    this.showDynamicMission(this.lvl);
 
     // Player
     this.player=this.physics.add.sprite(80,350,'player');
@@ -346,6 +399,10 @@ class GameplayScene extends Phaser.Scene {
     this.physics.add.overlap(this.player,this.coinGroup,this.onCoin,null,this);
     this.physics.add.overlap(this.player,this.scrollGroup,this.onScroll,null,this);
     this.physics.add.overlap(this.player,this.cpGroup,this.onCp,null,this);
+    this.physics.add.overlap(this.player,this.dynamicStarGroup,this.onDynamicStar,null,this);
+    this.physics.add.overlap(this.player,this.dynamicPowerGroup,this.onDynamicPower,null,this);
+    this.physics.add.overlap(this.player,this.dynamicHazardGroup,this.onDynamicHazard,null,this);
+    this.physics.add.overlap(this.player,this.dynamicMeteorGroup,this.onDynamicHazard,null,this);
     if (this.endpoint) this.physics.add.overlap(this.player,this.endpoint,this.onEnd,null,this);
     this.cameras.main.startFollow(this.player,true,0.1,0.1);
 
@@ -415,6 +472,183 @@ class GameplayScene extends Phaser.Scene {
     }
   }
 
+  // ========== v1.7 FULL GAMEPLAY REVISION ==========
+  decorateDynamicWorld(l){
+    const W=3000;
+    const palette = l<=8
+      ? {sky1:0x10162F,sky2:0x1A2E46,mountain:0x263B55,ruin:0xBFA66A}
+      : l<=16
+      ? {sky1:0x1C1426,sky2:0x402315,mountain:0x5D3B22,ruin:0xD4A54D}
+      : l<=24
+      ? {sky1:0x0F1C22,sky2:0x163E44,mountain:0x245A5E,ruin:0xC2B280}
+      : {sky1:0x120B20,sky2:0x2D1744,mountain:0x3B2A55,ruin:0xFFD700};
+
+    const bg=this.add.graphics();
+    bg.fillGradientStyle(palette.sky1,palette.sky1,palette.sky2,palette.sky2,1);
+    bg.fillRect(0,0,W,500);
+    bg.setDepth(-30);
+
+    // Moon / sun glow
+    const orbX=260+(l%5)*60;
+    this.add.circle(orbX,80,58,0xFFDFA6,0.16).setDepth(-25);
+    this.add.circle(orbX,80,32,0xFFD700,0.20).setDepth(-24);
+
+    // Mountains
+    const mg=this.add.graphics();
+    mg.fillStyle(palette.mountain,0.50);
+    for(let x=0;x<W;x+=170){
+      const h=70+((x*19+l*53)%120);
+      mg.fillTriangle(x,455,x+90,455-h,x+190,455);
+    }
+    mg.setDepth(-22);
+
+    // Ancient pillars / ruins
+    for(let x=360;x<W;x+=420){
+      const baseY=408+((x+l*17)%24);
+      const p=this.add.image(x,baseY,'dyn_pillar');
+      p.setAlpha(0.38);
+      p.setDepth(-10);
+      p.setScale(0.8+((x+l)%3)*0.12);
+    }
+
+    // Moving sky stars
+    for(let i=0;i<70;i++){
+      const s=this.add.circle(
+        Phaser.Math.Between(20,W-20),
+        Phaser.Math.Between(25,230),
+        Phaser.Math.FloatBetween(0.8,2.2),
+        0xFFF0B8,
+        Phaser.Math.FloatBetween(0.18,0.75)
+      );
+      s.setDepth(-18);
+      this.tweens.add({targets:s,alpha:Phaser.Math.FloatBetween(0.15,0.95),duration:900+((i*137)%1600),yoyo:true,repeat:-1});
+    }
+
+    // Road signs to make progress visible
+    for(let x=500;x<W;x+=500){
+      const sign=this.add.text(x,425,'✦', {fontSize:'22px',color:'#FFD700'});
+      sign.setDepth(2);
+      sign.setAlpha(0.65);
+    }
+  }
+
+  addDynamicGameplay(l){
+    // Collectible stars in all 37 levels
+    const starCount=10+Math.min(8,Math.floor(l/4));
+    for(let i=0;i<starCount;i++){
+      const x=250+i*(2450/starCount)+Phaser.Math.Between(-30,40);
+      const y=Phaser.Math.Between(165,335);
+      const st=this.dynamicStarGroup.create(x,y,'dyn_star');
+      st.setDepth(10);
+      st.setData('kind','star');
+      this.tweens.add({targets:st,y:y-8,angle:360,duration:1400+Phaser.Math.Between(0,700),yoyo:true,repeat:-1,ease:'Sine.InOut'});
+    }
+
+    // Obstacles start early, but stay fair
+    const hazardCount= l<3 ? 3 : Math.min(10,4+Math.floor(l/3));
+    for(let i=0;i<hazardCount;i++){
+      const x=520+i*(2200/hazardCount)+Phaser.Math.Between(-45,45);
+      const h=this.dynamicHazardGroup.create(x,438,'dyn_fire');
+      h.setDepth(8);
+      h.setData('lastHit',0);
+      h.refreshBody();
+    }
+
+    // Super power orbs: friends/companions help jump higher
+    const orbX=620+(l%5)*310;
+    const orb=this.dynamicPowerGroup.create(orbX,285,'dyn_orb');
+    orb.setDepth(11);
+    orb.setData('kind','superjump');
+    this.tweens.add({targets:orb,scale:1.22,alpha:0.70,duration:800,yoyo:true,repeat:-1});
+
+    if(l>=2){
+      const meteorCount=Math.min(7,1+Math.floor(l/4));
+      for(let i=0;i<meteorCount;i++){
+        const x=760+i*(1900/meteorCount)+Phaser.Math.Between(-60,60);
+        const m=this.dynamicMeteorGroup.create(x,Phaser.Math.Between(45,135),'dyn_meteor');
+        m.body.allowGravity=false;
+        m.setDepth(12);
+        m.setVelocity(Phaser.Math.Between(-45,45),Phaser.Math.Between(70,145));
+        m.setData('baseX',x);
+        m.setData('lastHit',0);
+      }
+    }
+  }
+
+  showDynamicMission(l){
+    const missions=[
+      'Собери 5 ѕвезди и стигни до крајот.',
+      'Избегни ги препреките и најди го свитокот.',
+      'Активирај супер скок од другарчињата.',
+      'Внимавај на небесните метеори.',
+      'Собери мудрост без да паднеш.',
+      'Следи ги златните знаци до крајот.',
+      'Најди ја светлината помеѓу урнатините.',
+      'Докажи дека си патник на протоколот.'
+    ];
+    if(window.AQDynamic && AQDynamic.toast){
+      AQDynamic.toast('<strong>🎯 Мисија ниво '+l+':</strong><br>'+missions[(l-1)%missions.length],4200);
+    }
+  }
+
+  updateDynamicMeteors(){
+    if(!this.dynamicMeteorGroup)return;
+    this.dynamicMeteorGroup.children.iterate(m=>{
+      if(!m||!m.active)return;
+      m.angle+=4;
+      if(m.y>480||m.x<0||m.x>3000){
+        const bx=m.getData('baseX')||900;
+        m.setPosition(bx+Phaser.Math.Between(-120,120),Phaser.Math.Between(35,120));
+        m.setVelocity(Phaser.Math.Between(-50,50),Phaser.Math.Between(75,155));
+      }
+    });
+  }
+
+  onDynamicStar(p,st){
+    if(!st.active)return;
+    this.particles(st.x,st.y,0xFFD700,9);
+    if(window.GameSounds) GameSounds.coin();
+    st.disableBody(true,true);
+    this.dynamicStarsCollected++;
+    this.coins++;
+    this.score+=25;
+    state.totalCoins=(state.totalCoins||0)+1;
+    state.wisdomPoints=(state.wisdomPoints||0)+5;
+    saveState(state);
+    const hud=document.getElementById('hud-coins');
+    if(hud)hud.textContent=state.totalCoins;
+  }
+
+  onDynamicPower(p,power){
+    if(!power.active)return;
+    power.disableBody(true,true);
+    this.superJumpUntil=this.time.now+14000;
+    this.canDJ=true;
+    this.score+=80;
+    state.wisdomPoints=(state.wisdomPoints||0)+10;
+    saveState(state);
+    this.particles(power.x,power.y,0x4A90E2,18);
+    if(window.AQDynamic&&AQDynamic.toast){
+      AQDynamic.toast('<strong>⚡ Супер моќ од другарчињата!</strong><br>14 секунди имаш двоен и повисок скок.',4500);
+    }
+    if(window.GameSounds) GameSounds.power();
+  }
+
+  onDynamicHazard(p,h){
+    const now=this.time.now||Date.now();
+    if(h.getData&&now-(h.getData('lastHit')||0)<1200)return;
+    if(h.setData)h.setData('lastHit',now);
+    this.dynamicFalls++;
+    this.score=Math.max(0,this.score-35);
+    this.particles(this.player.x,this.player.y,0xFF6B35,12);
+    this.player.setVelocity(0,0);
+    this.player.setPosition(Math.max(80,this.player.x-130),350);
+    if(window.GameSounds) GameSounds.hit();
+    if(window.AQDynamic&&AQDynamic.toast){
+      AQDynamic.toast('<strong>🔥 Предизвик!</strong><br>Патот на Александар бара внимание и мудрост.',2600);
+    }
+  }
+
   spawnCoin(x,y){
     const c=this.coinGroup.create(x,y,'coin');
     this.tweens.add({targets:c,y:y-4,duration:1000,yoyo:true,repeat:-1,ease:'Sine.InOut'});
@@ -470,6 +704,7 @@ class GameplayScene extends Phaser.Scene {
     let stars=1;
     if(this.coins>=5)stars=2;
     if(this.coins>=8 && this.scrolls>=1 && this.timeE<120)stars=3;
+    if((this.dynamicStarsCollected||0)>=8 && this.dynamicFalls===0)stars=Math.max(stars,3);
 
     if(!state.completedLevels.includes(this.lvl)){
       state.completedLevels.push(this.lvl);
@@ -525,6 +760,7 @@ class GameplayScene extends Phaser.Scene {
 
   update(){
     if(this.ended)return;
+    this.updateDynamicMeteors();
     // Apply companion effects
     const fx = getCompanionEffects();
     const touchKeys = window.__AQ_TOUCH_KEYS || {};
@@ -539,7 +775,7 @@ class GameplayScene extends Phaser.Scene {
 
     const ground=this.player.body.touching.down;
     if(ground)this.jumps=0;
-    const jumpPower = 400 * fx.jump;
+    const jumpPower = 400 * fx.jump * (this.superJumpUntil && this.time.now < this.superJumpUntil ? 1.75 : 1);
     if(jump){
       if(ground){this.player.setVelocityY(-jumpPower);this.jumps=1;this.particles(this.player.x,this.player.y+15,0x4A90E2,3);}
       else if((this.canDJ||fx.jump>1.3)&&this.jumps<2){this.player.setVelocityY(-jumpPower*0.85);this.jumps=2;this.particles(this.player.x,this.player.y+15,0x4A90E2,5);}
