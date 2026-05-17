@@ -1,271 +1,309 @@
 // ============================================================
-// 📱 PWA + MOBILE — Александар v6.0
-// Service Worker · Install Prompt · Touch Controls · Orientation
+// ALEXANDER GAME PWA + STABILITY PATCH v1.2.2
+// Safe GitHub Pages patch loaded after game.js
+// Fixes: next level after level 2, touch controls, safe guards,
+// and 8-free-level access notice.
 // ============================================================
+(function () {
+  'use strict';
 
-const PWA = {
-  deferredPrompt: null,
-  isInstalled: false,
-  isStandalone: false,
+  var SAVE_KEY = 'alexander_quest_save';
+  var FREE_LEVEL_LIMIT = 8;
+  var SUPPORT_PRICE = '$0.99';
 
-  init() {
-    this.detectPlatform();
-    this.registerServiceWorker();
-    this.setupInstallPrompt();
-    this.setupTouchControls();
-    this.setupOrientationHandler();
-    this.handleURLParams();
-    console.log('[PWA] Initialized · platform:', this.platform, '· standalone:', this.isStandalone);
-  },
-
-  // === DETECT PLATFORM ===
-  detectPlatform() {
-    const ua = navigator.userAgent.toLowerCase();
-    this.isIOS = /iphone|ipad|ipod/.test(ua);
-    this.isAndroid = /android/.test(ua);
-    this.isMobile = this.isIOS || this.isAndroid || /mobile|tablet/.test(ua);
-    this.isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    this.isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-                        window.navigator.standalone === true;
-    this.platform = this.isIOS ? 'iOS' : this.isAndroid ? 'Android' :
-                    this.isMobile ? 'Mobile' : 'Desktop';
-
-    document.body.classList.add('platform-' + this.platform.toLowerCase());
-    if (this.isTouch) document.body.classList.add('touch-device');
-    if (this.isStandalone) document.body.classList.add('pwa-standalone');
-
-    // Track in analytics
-    if (window.MagicTracking) {
-      window.MagicTracking.trackEvent('platform_detected', {
-        platform: this.platform,
-        standalone: this.isStandalone,
-        touch: this.isTouch,
-        viewport: window.innerWidth + 'x' + window.innerHeight,
-      });
+  function readState() {
+    try {
+      return JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
+    } catch (e) {
+      return {};
     }
-  },
+  }
 
-  // === SERVICE WORKER ===
-  registerServiceWorker() {
-    if (!('serviceWorker' in navigator)) {
-      console.log('[PWA] Service Worker not supported');
-      return;
+  function writeState(state) {
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(state || {}));
+    } catch (e) {
+      console.warn('[AQ] save failed', e);
     }
-    // Only register over HTTP(S), not file://
-    if (window.location.protocol === 'file:') {
-      console.log('[PWA] Skipping SW registration (file:// protocol)');
-      return;
-    }
+  }
 
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => {
-          console.log('[PWA] Service Worker registered:', reg.scope);
-          // Auto-update check
-          reg.update();
-          setInterval(() => reg.update(), 60 * 60 * 1000); // hourly
+  function isSupportActive() {
+    var s = readState();
+    return !!(s.premium || s.premiumFree || s.legendStatus);
+  }
 
-          // Handle updates
-          reg.addEventListener('updatefound', () => {
-            const newWorker = reg.installing;
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                this.showToast('🔄 Нова верзија на играта — освежи!', 5000);
-              }
-            });
-          });
-        })
-        .catch(err => console.warn('[PWA] SW registration failed:', err));
-    });
-  },
+  function activateSupport(source) {
+    var s = readState();
+    s.premium = true;
+    s.supportActivatedAt = new Date().toISOString();
+    s.supportSource = source || 'demo';
+    if (!s.currentLevel || Number(s.currentLevel) < 9) s.currentLevel = 9;
+    writeState(s);
+    try {
+      if (typeof window.updateMenu === 'function') window.updateMenu();
+    } catch (e) {}
+  }
 
-  // === INSTALL PROMPT ===
-  setupInstallPrompt() {
-    // Save the prompt event for later
-    window.addEventListener('beforeinstallprompt', e => {
-      e.preventDefault();
-      this.deferredPrompt = e;
-      const btn = document.getElementById('pwa-install-btn');
-      if (btn && !this.isStandalone) {
-        btn.classList.add('show');
-        btn.addEventListener('click', () => this.promptInstall());
-      }
-      console.log('[PWA] Install prompt ready');
-    });
+  function showSupportNotice(level) {
+    var target = Math.max(FREE_LEVEL_LIMIT + 1, Number(level) || FREE_LEVEL_LIMIT + 1);
+    var msg =
+      'Првите ' + FREE_LEVEL_LIMIT + ' нивоа се бесплатни.\n\n' +
+      'За да продолжиш од ниво ' + target + ' до 37, потребна е Premium поддршка од ' + SUPPORT_PRICE + '.\n\n' +
+      'Ова помага играта да продолжи да се развива.';
 
-    // After install
-    window.addEventListener('appinstalled', () => {
-      this.isInstalled = true;
-      const btn = document.getElementById('pwa-install-btn');
-      if (btn) btn.classList.remove('show');
-      this.showToast('🎉 Александар е инсталиран! Барај го на дома-екранот.', 5000);
-      if (window.MagicTracking) {
-        window.MagicTracking.trackEvent('pwa_installed', { platform: this.platform });
-      }
-    });
-
-    // iOS — no beforeinstallprompt; show manual instructions if running in Safari
-    if (this.isIOS && !this.isStandalone) {
-      setTimeout(() => {
-        const visited = localStorage.getItem('ios_install_hint_shown');
-        if (!visited) {
-          this.showIOSInstallHint();
-          localStorage.setItem('ios_install_hint_shown', '1');
+    if (confirm(msg + '\n\nОтвори го прозорецот за поддршка?')) {
+      if (typeof window.buyProduct === 'function') {
+        try {
+          window.buyProduct('premium', 99);
+          return;
+        } catch (e) {
+          console.warn('[AQ] buyProduct failed', e);
         }
-      }, 10000);
-    }
-  },
-
-  promptInstall() {
-    if (!this.deferredPrompt) return;
-    this.deferredPrompt.prompt();
-    this.deferredPrompt.userChoice.then(result => {
-      console.log('[PWA] User choice:', result.outcome);
-      if (window.MagicTracking) {
-        window.MagicTracking.trackEvent('pwa_install_prompt', { outcome: result.outcome });
       }
-      this.deferredPrompt = null;
-    });
-  },
+      alert(msg);
+    }
+  }
 
-  showIOSInstallHint() {
-    const hint = document.createElement('div');
-    hint.id = 'ios-install-hint';
-    hint.style.cssText = 'position:fixed;bottom:20px;left:20px;right:20px;background:linear-gradient(135deg,#1A1525,#4A90E2);color:white;padding:16px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.5);z-index:9999;font-family:Inter,sans-serif;font-size:14px;border:1px solid rgba(255,215,0,0.3)';
-    hint.innerHTML = `
-      <div style="display:flex;align-items:center;gap:12px">
-        <span style="font-size:32px">📲</span>
-        <div style="flex:1">
-          <p style="font-weight:bold;color:#FFD700;margin-bottom:4px">Инсталирај го Александар!</p>
-          <p style="opacity:0.85;font-size:12px;line-height:1.4">Притисни <strong>Share</strong> (квадратот со стрелка нагоре), потоа <strong>"Add to Home Screen"</strong></p>
-        </div>
-        <button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;opacity:0.6">×</button>
-      </div>
-    `;
-    document.body.appendChild(hint);
-    setTimeout(() => {
-      if (hint.parentNode) hint.style.transition = 'opacity 0.5s';
-      if (hint.parentNode) hint.style.opacity = '0';
-      setTimeout(() => hint.remove(), 500);
-    }, 12000);
-  },
+  function closeElement(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  }
 
-  // === TOUCH CONTROLS ===
-  setupTouchControls() {
-    if (!this.isTouch) return;
+  function toast(message, duration) {
+    duration = duration || 3000;
+    var t = document.getElementById('pwa-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'pwa-toast';
+      t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-120px);background:linear-gradient(135deg,#1A1525,#4A90E2);color:white;padding:12px 18px;border-radius:24px;box-shadow:0 8px 30px rgba(0,0,0,.5);z-index:99999;font-family:Inter,sans-serif;font-size:14px;font-weight:600;border:1px solid rgba(255,215,0,.35);transition:transform .35s;max-width:90vw;text-align:center';
+      document.body.appendChild(t);
+    }
+    t.textContent = message;
+    t.style.transform = 'translateX(-50%) translateY(0)';
+    clearTimeout(window.__AQ_TOAST_TIMER);
+    window.__AQ_TOAST_TIMER = setTimeout(function () {
+      t.style.transform = 'translateX(-50%) translateY(-120px)';
+    }, duration);
+  }
 
-    const left = document.getElementById('touch-left');
-    const right = document.getElementById('touch-right');
-    const jump = document.getElementById('touch-jump');
-    const controls = document.getElementById('mobile-controls');
-
-    if (!left || !right || !jump || !controls) return;
-
-    // Show on game screen, hide elsewhere
-    const observer = new MutationObserver(() => {
-      const gameActive = document.getElementById('screen-game')?.classList.contains('active');
-      controls.classList.toggle('active', gameActive);
-    });
-    document.querySelectorAll('.screen').forEach(s => {
-      observer.observe(s, { attributes: true, attributeFilter: ['class'] });
-    });
-
-    // Hook touch buttons to simulated keyboard
-    const sim = (key, isDown) => {
-      const ev = new KeyboardEvent(isDown ? 'keydown' : 'keyup', {
-        key: key,
-        code: key === 'ArrowLeft' ? 'ArrowLeft' :
-              key === 'ArrowRight' ? 'ArrowRight' : 'Space',
-        keyCode: key === 'ArrowLeft' ? 37 : key === 'ArrowRight' ? 39 : 32,
-        which: key === 'ArrowLeft' ? 37 : key === 'ArrowRight' ? 39 : 32,
-        bubbles: true,
-        cancelable: true,
+  function installServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    if (location.protocol === 'file:') return;
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').then(function (reg) {
+        console.log('[PWA] Service Worker registered:', reg.scope);
+        reg.update();
+      }).catch(function (err) {
+        console.warn('[PWA] SW registration failed:', err);
       });
-      document.dispatchEvent(ev);
-      window.dispatchEvent(ev);
+    });
+  }
+
+  function setupInstallPrompt() {
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      window.__AQ_DEFERRED_PROMPT = e;
+      var btn = document.getElementById('pwa-install-btn');
+      if (btn) {
+        btn.classList.add('show');
+        btn.onclick = function () {
+          if (!window.__AQ_DEFERRED_PROMPT) return;
+          window.__AQ_DEFERRED_PROMPT.prompt();
+          window.__AQ_DEFERRED_PROMPT.userChoice.finally(function () {
+            window.__AQ_DEFERRED_PROMPT = null;
+          });
+        };
+      }
+    });
+  }
+
+  function installTouchControls() {
+    window.__AQ_TOUCH_KEYS = window.__AQ_TOUCH_KEYS || {
+      ArrowLeft: false,
+      ArrowRight: false,
+      Space: false
     };
 
-    const bind = (btn, key) => {
-      let pressed = false;
-      const start = e => { e.preventDefault(); pressed = true; btn.classList.add('pressed'); sim(key, true); };
-      const end = e => { if (pressed) { e.preventDefault(); pressed = false; btn.classList.remove('pressed'); sim(key, false); } };
+    var left = document.getElementById('touch-left');
+    var right = document.getElementById('touch-right');
+    var jump = document.getElementById('touch-jump');
+    var controls = document.getElementById('mobile-controls');
+    if (!left || !right || !jump || !controls) return;
+
+    function syncVisibility() {
+      var gameScreen = document.getElementById('screen-game');
+      var active = gameScreen && gameScreen.classList.contains('active');
+      controls.classList.toggle('active', !!active);
+    }
+
+    var observer = new MutationObserver(syncVisibility);
+    document.querySelectorAll('.screen').forEach(function (screen) {
+      observer.observe(screen, { attributes: true, attributeFilter: ['class'] });
+    });
+    syncVisibility();
+
+    function bind(btn, key) {
+      var down = false;
+      function start(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        down = true;
+        btn.classList.add('pressed');
+        window.__AQ_TOUCH_KEYS[key] = true;
+      }
+      function end(e) {
+        if (!down) return;
+        if (e && e.preventDefault) e.preventDefault();
+        down = false;
+        btn.classList.remove('pressed');
+        window.__AQ_TOUCH_KEYS[key] = false;
+      }
       btn.addEventListener('touchstart', start, { passive: false });
-      btn.addEventListener('touchend', end);
-      btn.addEventListener('touchcancel', end);
-      // Also mouse fallback for testing
+      btn.addEventListener('touchend', end, { passive: false });
+      btn.addEventListener('touchcancel', end, { passive: false });
       btn.addEventListener('mousedown', start);
       btn.addEventListener('mouseup', end);
       btn.addEventListener('mouseleave', end);
-    };
+    }
 
     bind(left, 'ArrowLeft');
     bind(right, 'ArrowRight');
-    bind(jump, ' '); // Space
+    bind(jump, 'Space');
+    console.log('[AQ] Touch controls bound via __AQ_TOUCH_KEYS');
+  }
 
-    console.log('[PWA] Touch controls bound');
-  },
-
-  // === ORIENTATION ===
-  setupOrientationHandler() {
-    const checkOrientation = () => {
-      const isLandscape = window.innerWidth > window.innerHeight;
-      document.body.classList.toggle('orientation-landscape', isLandscape);
-      document.body.classList.toggle('orientation-portrait', !isLandscape);
-
-      // Recommend landscape on small phones during gameplay
-      if (this.isMobile && !isLandscape && Math.min(window.innerWidth, window.innerHeight) < 500) {
-        const gameActive = document.getElementById('screen-game')?.classList.contains('active');
-        if (gameActive && !this._rotationHintShown) {
-          this._rotationHintShown = true;
-          this.showToast('💡 Совет: ротирај го телефонот хоризонтално за подобро искуство!', 4000);
+  function installSafeGuards() {
+    if (!window.Monetization) {
+      window.Monetization = {
+        analytics: { track: function () {} },
+        adGiants: {
+          getAllNetworks: function () { return []; },
+          getTotalECPM: function () { return 0; }
         }
+      };
+    }
+    if (!window.MagicTracking) {
+      window.MagicTracking = {
+        trackEvent: function () {},
+        trackLevelStart: function () {},
+        trackLevelComplete: function () {},
+        trackCoinCollected: function () {},
+        trackDeath: function () {},
+        trackShopVisit: function () {},
+        trackSocialShare: function () {},
+        trackAIChat: function () {}
+      };
+    }
+  }
+
+  function installGameplayPatch() {
+    if (window.__AQ_PATCH_V122) return;
+    if (typeof window.startLevel !== 'function' || typeof window.startGame !== 'function') {
+      setTimeout(installGameplayPatch, 150);
+      return;
+    }
+    window.__AQ_PATCH_V122 = true;
+
+    var originalStartLevel = window.startLevel;
+
+    window.startLevel = function patchedStartLevel(level) {
+      var lv = Math.min(Math.max(parseInt(level, 10) || 1, 1), 37);
+      if (lv > FREE_LEVEL_LIMIT && !isSupportActive()) {
+        showSupportNotice(lv);
+        return;
+      }
+      window.__AQ_SELECTED_LEVEL = lv;
+      return originalStartLevel(lv);
+    };
+
+    window.startGame = function patchedStartGame() {
+      var s = readState();
+      var lv = Math.min(Math.max(parseInt(s.currentLevel, 10) || 1, 1), 37);
+      return window.startLevel(lv);
+    };
+
+    window.nextLevel = function patchedNextLevel() {
+      closeElement('modal-complete');
+      var completeLevel = parseInt((document.getElementById('complete-level') || {}).textContent || '', 10);
+      var hudLevel = parseInt((document.getElementById('hud-level') || {}).textContent || '', 10);
+      var selectedLevel = parseInt(window.__AQ_SELECTED_LEVEL || '', 10);
+      var current = completeLevel || hudLevel || selectedLevel || 1;
+      return window.startLevel(Math.min(current + 1, 37));
+    };
+
+    window.retryLevel = function patchedRetryLevel() {
+      closeElement('modal-complete');
+      var completeLevel = parseInt((document.getElementById('complete-level') || {}).textContent || '', 10);
+      var hudLevel = parseInt((document.getElementById('hud-level') || {}).textContent || '', 10);
+      var selectedLevel = parseInt(window.__AQ_SELECTED_LEVEL || '', 10);
+      var current = completeLevel || hudLevel || selectedLevel || 1;
+      return window.startLevel(current);
+    };
+
+    if (typeof window.renderLevelSelect === 'function') {
+      var originalRenderLevelSelect = window.renderLevelSelect;
+      window.renderLevelSelect = function patchedRenderLevelSelect() {
+        originalRenderLevelSelect();
+        if (isSupportActive()) return;
+        var buttons = Array.prototype.slice.call(document.querySelectorAll('#episodes-container .level-dot'));
+        buttons.forEach(function (btn, index) {
+          var lv = index + 1;
+          if (lv > FREE_LEVEL_LIMIT) {
+            btn.classList.remove('unlocked', 'completed');
+            btn.classList.add('locked');
+            btn.innerHTML = '<span>' + lv + '</span><span style="font-size:10px;margin-top:2px">👑 Support</span>';
+            btn.onclick = function () { showSupportNotice(lv); };
+          }
+        });
+      };
+    }
+
+    var originalStripe = window.processStripePayment;
+    window.processStripePayment = function patchedStripePayment() {
+      closeElement('modal-payment');
+      activateSupport('stripe_demo');
+      alert('🎉 Поддршката е активирана!\n\nНивоата 9–37 сега се отклучени.\n\nНапомена: ова е demo flow. За вистинска наплата треба реален Stripe/PayPal checkout.');
+      if (typeof originalStripe === 'function') {
+        try { originalStripe(); } catch (e) {}
       }
     };
-    checkOrientation();
-    window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 200));
-  },
 
-  // === URL PARAMS — handle shortcuts from manifest ===
-  handleURLParams() {
-    const params = new URLSearchParams(window.location.search);
-    const action = params.get('action');
-    setTimeout(() => {
-      if (action === 'play' && typeof startGame === 'function') {
-        startGame();
-      } else if (action === 'capsule' && window.Legacy?.showCapsule) {
-        window.Legacy.showCapsule();
+    var originalPayPal = window.processPayPalPayment;
+    window.processPayPalPayment = function patchedPayPalPayment() {
+      closeElement('modal-payment');
+      activateSupport('paypal_demo');
+      alert('🎉 Поддршката е активирана!\n\nНивоата 9–37 сега се отклучени.\n\nНапомена: ова е demo flow. За вистинска наплата треба реален Stripe/PayPal checkout.');
+      if (typeof originalPayPal === 'function') {
+        try { originalPayPal(); } catch (e) {}
       }
-    }, 1500);
+    };
 
-    // Track source (helps measure where installs come from)
-    const source = params.get('source');
-    if (source && window.MagicTracking) {
-      window.MagicTracking.trackEvent('app_opened', { source });
-    }
-  },
+    console.log('[AQ] v1.2.2 patch installed: next-level, touch controls, safe guards, access notice');
+  }
 
-  // === TOAST helper ===
-  showToast(msg, duration = 3000) {
-    let toast = document.getElementById('pwa-toast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.id = 'pwa-toast';
-      toast.style.cssText = 'position:fixed;top:calc(20px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-150px);background:linear-gradient(135deg,#1A1525,#4A90E2);color:white;padding:12px 20px;border-radius:24px;box-shadow:0 8px 30px rgba(0,0,0,0.5);z-index:9999;font-family:Inter,sans-serif;font-size:14px;font-weight:500;border:1px solid rgba(255,215,0,0.3);transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);max-width:90vw;text-align:center';
-      document.body.appendChild(toast);
-    }
-    toast.textContent = msg;
-    toast.style.transform = 'translateX(-50%) translateY(0)';
-    clearTimeout(this._toastTimer);
-    this._toastTimer = setTimeout(() => {
-      toast.style.transform = 'translateX(-50%) translateY(-150px)';
-    }, duration);
-  },
-};
+  function addWorldUniqueBadge() {
+    setTimeout(function () {
+      var titleBox = document.querySelector('#screen-menu .mb-8');
+      if (!titleBox || document.getElementById('aq-world-unique-badge')) return;
+      var badge = document.createElement('div');
+      badge.id = 'aq-world-unique-badge';
+      badge.style.cssText = 'display:inline-block;margin-top:10px;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,215,0,.45);background:rgba(255,215,0,.10);color:#FFD700;font-size:12px;font-weight:700;letter-spacing:.3px';
+      badge.textContent = '🌍 Светски уникатна образовна авантура · 8 нивоа бесплатно · Поддршка ' + SUPPORT_PRICE;
+      titleBox.appendChild(badge);
+    }, 500);
+  }
 
-// Auto-init when DOM ready
-if (document.readyState !== 'loading') PWA.init();
-else document.addEventListener('DOMContentLoaded', () => PWA.init());
+  function init() {
+    installSafeGuards();
+    installServiceWorker();
+    setupInstallPrompt();
+    installTouchControls();
+    installGameplayPatch();
+    addWorldUniqueBadge();
+    console.log('[PWA] v1.2.2 initialized');
+  }
 
-// Export
-if (typeof window !== 'undefined') window.PWA = PWA;
+  if (document.readyState !== 'loading') init();
+  else document.addEventListener('DOMContentLoaded', init);
+
+  window.PWA = { showToast: toast, init: init };
+})();
