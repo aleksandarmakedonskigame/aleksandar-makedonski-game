@@ -8,6 +8,36 @@
 const SAVE_KEY = 'alexander_quest_save';
 const LEADER_KEY = 'alexander_quest_leaderboard';
 
+// ========== FAIR ACCESS / PREMIUM GATE ==========
+// Првите 8 нивоа се бесплатни. Од ниво 9 натаму играта бара Премиум поддршка ($0.99).
+// Ова е фер модел: децата и родителите можат да пробаат, а проектот добива поддршка за развој.
+const FREE_LEVEL_LIMIT = 8;
+const PREMIUM_PRICE_USD = '0.99';
+
+function hasPremiumAccess() {
+  return Boolean(state?.premium || state?.premiumFree || state?.earlyAccess || state?.legendStatus);
+}
+
+function isPremiumLevel(level) {
+  return Number(level) > FREE_LEVEL_LIMIT;
+}
+
+function showPremiumRequired(level) {
+  const msg =
+    '👑 Ниво ' + level + ' е дел од Премиум патеката.\n\n' +
+    'Првите ' + FREE_LEVEL_LIMIT + ' нивоа се бесплатни за сите.\n' +
+    'За да продолжиш од ниво 9 до 37, активирај Премиум поддршка за само $' + PREMIUM_PRICE_USD + '.\n\n' +
+    'Ова помага играта да се одржува, подобрува и развива понатаму.';
+
+  alert(msg);
+
+  if (typeof buyProduct === 'function') {
+    buyProduct('premium', 99);
+  } else {
+    showScreen('shop');
+  }
+}
+
 const FACTS = [
   {id:1, title:'Кралскиот Тутор', text:'Александар бил ученик на Аристотел, најголемиот филозоф во историјата!'},
   {id:2, title:'Единство на Култури', text:'Александар го почитувал персиската култура и јазик на својот двор!'},
@@ -162,17 +192,23 @@ function renderLevelSelect() {
     el.appendChild(div);
     const grid = div.querySelector(`#ep-grid-${ep.id}`);
     for (let lv = ep.range[0]; lv <= ep.range[1]; lv++) {
-      const unlocked = lv <= state.currentLevel || state.completedLevels.includes(lv-1);
+      const progressionUnlocked = lv <= state.currentLevel || state.completedLevels.includes(lv-1);
+      const premiumLocked = isPremiumLevel(lv) && !hasPremiumAccess();
+      const unlocked = progressionUnlocked && !premiumLocked;
       const completed = state.completedLevels.includes(lv);
       const stars = state.levelStars[lv] || 0;
       const milestone = lv===12||lv===24||lv===37;
       const isGift = lv===12?'👑':lv===24?'🪽':lv===37?'🏆':'';
       const btn = document.createElement('button');
       btn.className = `level-dot ${completed?'completed':unlocked?'unlocked':'locked'}`;
+      btn.title = premiumLocked ? 'Премиум ниво — потребна е поддршка од $0.99' : '';
       btn.innerHTML = unlocked
         ? `<span>${lv}</span>${stars>0?'<div class="flex gap-0.5 mt-0.5">'+Array(3).fill(0).map((_,i)=>'<span style="font-size:8px;color:'+(i<stars?'#FFD700':'#555')+'">★</span>').join('')+'</div>':''}${milestone&&unlocked?'<div class="absolute -top-1 -right-1 bg-yellow-500 rounded-full w-4 h-4 flex items-center justify-center text-xs">'+isGift+'</div>':''}`
-        : '🔒';
-      btn.onclick = () => { if(unlocked) startLevel(lv); };
+        : (premiumLocked ? `<span>${lv}</span><span style="font-size:11px">👑</span>` : '🔒');
+      btn.onclick = () => {
+        if (premiumLocked) { showPremiumRequired(lv); return; }
+        if (unlocked) startLevel(lv);
+      };
       grid.appendChild(btn);
     }
   });
@@ -185,8 +221,15 @@ let currentScene = null;
 function startGame() { startLevel(state.currentLevel); }
 
 function startLevel(level) {
+  level = Math.min(Math.max(parseInt(level, 10) || 1, 1), 37);
+
+  if (isPremiumLevel(level) && !hasPremiumAccess()) {
+    showPremiumRequired(level);
+    return;
+  }
+
   showScreen('game');
-  state.currentLevel = Math.min(level, 37);
+  state.currentLevel = level;
   window.__AQ_SELECTED_LEVEL = state.currentLevel;
   saveState(state);
   updateMenu();
@@ -379,6 +422,7 @@ class GameplayScene extends Phaser.Scene {
 
   onCoin(p,c){
     this.particles(c.x,c.y,0xFFD700,5);
+    if(window.GameSounds) GameSounds.coin();
     c.destroy();this.coins++;
     const fx = getCompanionEffects();
     this.score += Math.floor(10 * fx.score);
@@ -388,6 +432,7 @@ class GameplayScene extends Phaser.Scene {
 
   onScroll(p,s){
     this.particles(s.x,s.y,0xFFA500,8);
+    if(window.GameSounds) GameSounds.scroll();
     s.destroy();this.scrolls++;
     const fx = getCompanionEffects();
     this.score += Math.floor(50 * fx.score);
@@ -419,6 +464,7 @@ class GameplayScene extends Phaser.Scene {
   onEnd(){
     if(this.ended)return;this.ended=true;this.timer.destroy();
     this.particles(this.player.x,this.player.y,0xFFD700,15);
+    if(window.GameSounds) GameSounds.victory();
     const tb=Math.max(0,300-this.timeE)*5;
     this.score+=tb;
     let stars=1;
@@ -599,7 +645,7 @@ function activateLegendWinner(){
   console.log('[EMAIL] Notifikacija ispratena do: aleksandarmakedonskigame@gmail.com');
 
   // Analytics
-  if(Monetization && Monetization.analytics){
+  if(window.Monetization && Monetization.analytics){
     Monetization.analytics.track('legend_winner',{
       player:state.playerName,
       level:37,
@@ -1041,7 +1087,7 @@ function setLang(l){
 }
 function resetProgress(){
   if(!confirm('Дали си сигурен? Целиот прогрес ќе биде избришан!'))return;
-  state={playerName:'Гостин',currentLevel:1,completedLevels:[],levelStars:{},totalCoins:0,collectedFacts:[],unlockedGifts:[],totalScore:0,sound:true,music:true,lang:'mk',bonusStreak:0,bonusDate:null,premium:false};
+  state={playerName:'Гостин',currentLevel:1,completedLevels:[],levelStars:{},totalCoins:0,collectedFacts:[],unlockedGifts:[],totalScore:0,sound:true,music:true,lang:'mk',bonusStreak:0,bonusDate:null,premium:false,premiumFree:false,premiumExpiry:null,earlyAccess:false,legendStatus:false,legendDate:null,legendSeason:null,legendTrophies:[],unlockedCompanions:[],activeCompanion:null,companionXP:{},kingdomBuildings:[],kingdomCoins:0,kingdomLevel:1};
   saveState(state);
   localStorage.removeItem(LEADER_KEY);
   alert('Прогресот е ресетиран!');
@@ -1100,7 +1146,13 @@ function processStripePayment(){
     :'🎫 Сезонска картичка активирана!';
   alert(msg + '\n\n(Демо режим - за реално плаќање потребен е Stripe акаунт за aleksandarmakedonskigame@gmail.com)');
   if(pendingProduct==='coins'){state.totalCoins+=500;saveState(state);updateMenu();}
-  if(pendingProduct==='premium'){state.premium=true;saveState(state);}
+  if(pendingProduct==='premium'){
+    state.premium=true;
+    saveState(state);
+    updateMenu();
+    alert('👑 Премиум е активиран! Сега се отклучени нивоата 9–37.');
+    showScreen('levels');
+  }
 }
 
 function processPayPalPayment(){
@@ -1111,7 +1163,13 @@ function processPayPalPayment(){
     :'🎫 Сезонска картичка преку PayPal!';
   alert(msg + '\n\n(Демо режим - за реално плаќање потребен е PayPal акаунт за aleksandarmakedonskigame@gmail.com)');
   if(pendingProduct==='coins'){state.totalCoins+=500;saveState(state);updateMenu();}
-  if(pendingProduct==='premium'){state.premium=true;saveState(state);}
+  if(pendingProduct==='premium'){
+    state.premium=true;
+    saveState(state);
+    updateMenu();
+    alert('👑 Премиум е активиран! Сега се отклучени нивоата 9–37.');
+    showScreen('levels');
+  }
 }
 
 // ========== SOCIAL SHARE ==========
