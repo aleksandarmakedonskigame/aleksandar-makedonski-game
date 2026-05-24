@@ -1652,5 +1652,95 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="v181_clean_buttons.js?v=1.8.3"></script>
 <script src="v183_level4_rescue_overlay.js?v=1.8.3"></script>
 <script src="pwa.js?v=1.8.3"></script>
+  <!-- ================================================== -->
+<!-- WPA МОБИЛНИ + АНГЛИСКИ + ВИДЕО ТУТОРИЈАЛИ          -->
+<!-- ================================================== -->
+
+<!-- Capacitor за iOS/Android -->
+<script>
+  if (window.Capacitor) {
+    console.log('📱 Работи како мобилна апликација');
+    document.body.classList.add('capacitor-mode');
+  }
+  
+  // Back button handler за Android
+  document.addEventListener('backbutton', function(e) {
+    const modals = document.querySelectorAll('.modal:not(.hidden)');
+    if (modals.length > 0) {
+      modals.forEach(m => m.classList.add('hidden'));
+      e.preventDefault();
+    } else if (document.getElementById('screen-game').classList.contains('active')) {
+      showScreen('menu');
+      e.preventDefault();
+    }
+  });
+</script>
+
+<!-- Англиска верзија (копче во менито) -->
+<script>
+function toggleLanguage() {
+  const currentLang = localStorage.getItem('wpa_lang') || 'mk';
+  const newLang = currentLang === 'mk' ? 'en' : 'mk';
+  localStorage.setItem('wpa_lang', newLang);
+  const btn = document.getElementById('lang-toggle');
+  if (btn) btn.textContent = newLang === 'mk' ? '🇬🇧 English' : '🇲🇰 Македонски';
+  location.reload();
+}
+
+// Додај го копчето во менито ако го нема
+setTimeout(() => {
+  const menuButtons = document.querySelector('#screen-menu .grid');
+  if (menuButtons && !document.getElementById('lang-toggle')) {
+    const btn = document.createElement('button');
+    btn.id = 'lang-toggle';
+    btn.className = 'game-btn-sm justify-center py-3';
+    btn.innerHTML = '🇬🇧 English';
+    btn.onclick = toggleLanguage;
+    menuButtons.appendChild(btn);
+  }
+}, 1000);
+</script>
+
+<!-- Video туторијал -->
+<script>
+function showTutorial() {
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4';
+  modal.innerHTML = `
+    <div class="bg-[#0d1220] border-2 border-yellow-500/50 rounded-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-yellow-400">🎮 Како се игра?</h2>
+        <button onclick="this.closest('.fixed').remove()" class="text-white text-2xl">✕</button>
+      </div>
+      <div class="space-y-4 text-[#f0f4f8]/80">
+        <p><strong>🎯 Цел:</strong> Заврши ги сите 37 нивоа и стани Легенда!</p>
+        <p><strong>🎮 Контроли (тастатура):</strong> Лево/Десно стрелки или A/D. Скок - Space или W.</p>
+        <p><strong>📱 Контроли (телефон):</strong> Копчиња на екранот (лево/десно/скок).</p>
+        <p><strong>⭐ Ѕвезди:</strong> Собирај ѕвезди за бонус поени.</p>
+        <p><strong>📜 Свитоци:</strong> Секој свиток содржи историски факт за Александар.</p>
+        <p><strong>🦅 Сопатници (Орли):</strong> Отклучи ги и ти помагаат со бонуси!</p>
+        <p><strong>👑 Кралство:</strong> По 37 нивоа, гради ја Александрија.</p>
+        <p><strong>🎵 Музика:</strong> Македонска етно музика (7/8 ритам).</p>
+        <p><strong>🤖 AI помошници:</strong> Прашај ги за совети!</p>
+      </div>
+      <button onclick="this.closest('.fixed').remove()" class="game-btn w-full mt-4">Разбрав! 🚀</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+// Додај го копчето во менито
+setTimeout(() => {
+  const menuButtons = document.querySelector('#screen-menu .grid');
+  if (menuButtons && !document.getElementById('tutorial-btn')) {
+    const btn = document.createElement('button');
+    btn.id = 'tutorial-btn';
+    btn.className = 'game-btn-sm justify-center py-3';
+    btn.innerHTML = '🎥 Како се игра';
+    btn.onclick = showTutorial;
+    menuButtons.appendChild(btn);
+  }
+}, 1000);
+</script>
 </body>
 </html>
