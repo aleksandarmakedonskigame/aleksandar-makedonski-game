@@ -1819,3 +1819,59 @@ window.onload=function(){
 
 window.AQ_GAME_BUILD_VERSION='1.8.2';
 console.log('[AQ Game] v1.8.2 Level 4 Light Fix loaded');
+// ==================================================
+// WPA МУЛТИПЛЕЈЕР – ДЕЦА ЗАЕДНО ИГРААТ
+// ==================================================
+const WPA_Multiplayer = {
+  roomId: null,
+  players: [],
+  myId: Math.random().toString(36).substring(2, 8),
+  
+  createRoom() {
+    this.roomId = 'room_' + Date.now();
+    localStorage.setItem('wpa_room', this.roomId);
+    this.players = [{ id: this.myId, level: 1, score: 0 }];
+    this.saveRoom();
+    alert(`🎮 Соба креирана! ID: ${this.roomId}\nСподели го ID-то со пријател.`);
+    return this.roomId;
+  },
+  
+  joinRoom(roomId) {
+    this.roomId = roomId;
+    this.loadRoom();
+    alert(`🎮 Се приклучи во соба ${roomId}`);
+  },
+  
+  saveRoom() {
+    localStorage.setItem(`wpa_room_${this.roomId}`, JSON.stringify(this.players));
+  },
+  
+  loadRoom() {
+    const saved = localStorage.getItem(`wpa_room_${this.roomId}`);
+    if (saved) this.players = JSON.parse(saved);
+  },
+  
+  getLeaderboard() {
+    return [...this.players].sort((a,b) => b.score - a.score);
+  },
+  
+  updateScore(level, score) {
+    const player = this.players.find(p => p.id === this.myId);
+    if (player) {
+      player.level = level;
+      player.score = score;
+      this.saveRoom();
+    }
+  }
+};
+
+// Додај копче за мултиплејер во менито
+function showMultiplayer() {
+  const action = confirm('🎮 Креирај нова соба (OK) или приклучи се (Cancel)?');
+  if (action) {
+    WPA_Multiplayer.createRoom();
+  } else {
+    const roomId = prompt('Внеси ID на соба:');
+    if (roomId) WPA_Multiplayer.joinRoom(roomId);
+  }
+}
