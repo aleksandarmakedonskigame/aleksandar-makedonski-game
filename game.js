@@ -3,7 +3,187 @@
 // 37 Levels, 4 AI Agents, Stripe/PayPal, Social Networks
 // Macedonian & English | LocalStorage Progress
 // ============================================================
+// ==================================================
+// WPA НАДГРАДБИ – МАКЕДОНСКА ЕТНО МУЗИКА + ЗВУЧНИ ЕФЕКТИ
+// ==================================================
 
+// 1. МАКЕДОНСКА ЕТНО МУЗИКА (7/8 ритам)
+const MacedonianMusic = {
+  ctx: null,
+  playing: false,
+  
+  init() {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    this.ctx = new AudioCtx();
+  },
+  
+  play7_8() {
+    if (!this.ctx || !this.playing) return;
+    const t = this.ctx.currentTime;
+    const melody = [392, 440, 493.88, 523.25, 587.33, 523.25, 440];
+    melody.forEach((freq, i) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.08, t + i * 0.18);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.18 + 0.4);
+      osc.connect(gain).connect(this.ctx.destination);
+      osc.start(t + i * 0.18);
+      osc.stop(t + i * 0.18 + 0.45);
+    });
+  },
+  
+  start() {
+    this.playing = true;
+    if (this.ctx?.state === 'suspended') this.ctx.resume();
+    const loop = () => {
+      if (!this.playing) return;
+      this.play7_8();
+      setTimeout(loop, 3600);
+    };
+    loop();
+  },
+  
+  stop() { this.playing = false; }
+};
+
+// 2. ЗВУЧНИ ЕФЕКТИ
+const GameAudio = {
+  playSound(type) {
+    if (!window.GameSounds) return;
+    if (type === 'coin') window.GameSounds.collectCoin?.();
+    if (type === 'scroll') window.GameSounds.collectScroll?.();
+    if (type === 'victory') window.GameSounds.levelComplete?.();
+    if (type === 'jump') window.GameSounds.playerJump?.();
+  }
+};
+
+// 3. СУПЕР МОЌ ОД ПРИЈАТЕЛИТЕ
+const FriendshipPower = {
+  activePower: null,
+  friends: [
+    { name: 'Аристотел', power: 'Мудрост', bonus: 'x2 поени од свитоци', unlocked: true },
+    { name: 'Хефестион', power: 'Братство', bonus: '+50 монети на почеток', unlocked: true },
+    { name: 'Букефал', power: 'Брзина', bonus: 'подвижност x1.5', unlocked: false },
+    { name: 'Птоломеј', power: 'Знаење', bonus: 'сите свитоци отклучени', unlocked: false },
+    { name: 'Диоген', power: 'Светлина', bonus: 'нема темни нивоа', unlocked: false }
+  ],
+  
+  activatePower(powerName) {
+    const friend = this.friends.find(f => f.name === powerName);
+    if (friend && friend.unlocked) {
+      this.activePower = friend;
+      this.showMessage(`✨ Активирана моќ: ${friend.power} – ${friend.bonus}`);
+      return true;
+    }
+    return false;
+  },
+  
+  showMessage(msg) {
+    const div = document.createElement('div');
+    div.textContent = msg;
+    div.style.cssText = 'position:fixed;top:20%;left:50%;transform:translateX(-50%);background:#1f2a3a;color:#d4af37;padding:12px 24px;border-radius:40px;z-index:1000;animation:fadeOut 3s forwards';
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 3000);
+  }
+};
+
+// 4. ПОПРАВКА НА ТЕМНИ НИВОА – ДОДАВАЊЕ ЅВЕЗДИ И СВЕТЛИНА
+function enhanceDarkLevels() {
+  const style = document.createElement('style');
+  style.textContent = `
+    #game-container canvas {
+      filter: brightness(1.05) contrast(1.02);
+    }
+    .level-darkness-fix {
+      background: radial-gradient(circle at 50% 30%, rgba(212,175,55,0.08), transparent);
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // Додај ѕвезди ако ги нема
+  if (!document.querySelector('.star-particle')) {
+    for (let i = 0; i < 80; i++) {
+      const star = document.createElement('div');
+      star.className = 'star-particle';
+      star.style.cssText = `position:fixed;left:${Math.random()*100}%;top:${Math.random()*100}%;width:${2+Math.random()*3}px;height:${2+Math.random()*3}px;background:white;border-radius:50%;opacity:${0.3+Math.random()*0.7};animation:twinkle ${2+Math.random()*3}s infinite;pointer-events:none;z-index:0`;
+      document.body.appendChild(star);
+    }
+  }
+}
+
+// 5. HUAWEI/HUAMI ИНТЕГРАЦИЈА (ЧЕКОРИ)
+const StepIntegration = {
+  steps: 0,
+  connected: false,
+  
+  init() {
+    this.checkHuawei();
+    this.checkHuami();
+    setInterval(() => this.sync(), 30000);
+  },
+  
+  checkHuawei() {
+    if (window.huawei?.health) {
+      window.huawei.health.getSteps().then(s => { this.steps = s; this.checkLevelUp(); });
+      this.connected = true;
+    }
+  },
+  
+  checkHuami() {
+    if (window.Zepp) {
+      window.Zepp.getUserSteps().then(s => { this.steps = s; this.checkLevelUp(); });
+      this.connected = true;
+    }
+  },
+  
+  checkLevelUp() {
+    const currentLevel = parseInt(localStorage.getItem('currentLevel') || '1');
+    const newLevel = Math.min(37, Math.floor(this.steps / 3700) + 1);
+    if (newLevel > currentLevel) {
+      localStorage.setItem('currentLevel', newLevel);
+      this.showNotif(`🎉 Честитки! Поместени чекори: ${this.steps}. Отклучено ниво ${newLevel}!`);
+    }
+  },
+  
+  sync() { if (this.connected) { this.checkHuawei(); this.checkHuami(); } },
+  
+  showNotif(msg) {
+    if (Notification.permission === 'granted') new Notification('WPA Игра', { body: msg });
+    else if (Notification.permission !== 'denied') Notification.requestPermission();
+  }
+};
+
+// 6. PWA ИНСТАЛАЦИЈА
+let pwaPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  pwaPrompt = e;
+});
+
+function installPWA() {
+  if (pwaPrompt) pwaPrompt.prompt();
+}
+
+// 7. АНИМАЦИЈА ЗА ИЗБЛЕДУВАЊЕ
+const fadeStyle = document.createElement('style');
+fadeStyle.textContent = `@keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } } @keyframes twinkle { 0%,100%{opacity:0.3}50%{opacity:1} }`;
+document.head.appendChild(fadeStyle);
+
+// ИНИЦИЈАЛИЗАЦИЈА
+document.addEventListener('DOMContentLoaded', () => {
+  enhanceDarkLevels();
+  StepIntegration.init();
+  if (typeof MacedonianMusic !== 'undefined') MacedonianMusic.init();
+});
+
+console.log('🏛️ WPA НАДГРАДБИ – АКТИВНИ: музика, супер моќи, ѕвезди, Huawei интеграција');
 // ========== GLOBAL STATE ==========
 const SAVE_KEY = 'alexander_quest_save';
 const LEADER_KEY = 'alexander_quest_leaderboard';
