@@ -6,8 +6,8 @@
   'use strict';
   const SAVE_KEY='alexander_quest_save';
 
-  function readState(){try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'{}')}catch(e){return {}}}
-  function saveState(s){try{localStorage.setItem(SAVE_KEY,JSON.stringify(s||{}))}catch(e){}}
+  function readState(){if(window.AQStore)return window.AQStore.read();try{return JSON.parse(localStorage.getItem(SAVE_KEY)||'{}')}catch(e){return {}}}
+  function saveState(s){if(window.AQStore){window.AQStore.write(s);return;}try{localStorage.setItem(SAVE_KEY,JSON.stringify(s||{}))}catch(e){}}
 
   const countries=[
     ['MK','🇲🇰','Македонија'],['AL','🇦🇱','Албанија'],['RS','🇷🇸','Србија'],['BG','🇧🇬','Бугарија'],['GR','🇬🇷','Грција'],['XK','🇽🇰','Косово'],
@@ -119,6 +119,8 @@
       this.makeAudio(); if(!this.ctx)return;
       if(this.ctx.state==='suspended')this.ctx.resume();
       this.playing=!this.playing;
+      if(this.playing){document.dispatchEvent(new CustomEvent('aq-music-start',{detail:'v17'}));}
+      if(!this._bus){this._bus=true;document.addEventListener('aq-music-start',e=>{if(e.detail!=='v17'&&this.playing)this.toggleMusic();});}
       this.master.gain.setTargetAtTime(this.playing?.85:0,this.ctx.currentTime,.05);
       document.getElementById('aq17-music').textContent=this.playing?'🔇 Исклучи 7/8 ритам':'🥁 Вклучи 7/8 ритам';
       if(this.playing)this.start78(); else this.stop78();
@@ -150,6 +152,7 @@
       t.textContent=msg;t.style.transform='translateX(-50%) translateY(0)';clearTimeout(this.tt);this.tt=setTimeout(()=>t.style.transform='translateX(-50%) translateY(-120px)',2600);
     },
     badge(){
+      return; // v1.9: без технички ознаки за верзија во детското мени
       setTimeout(()=>{
         const box=document.querySelector('#screen-menu .mb-8'); if(!box||document.getElementById('aq17-badge'))return;
         const b=document.createElement('div');b.id='aq17-badge';b.style.cssText='display:inline-block;margin-top:8px;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,215,0,.45);background:rgba(255,215,0,.10);color:#FFD700;font-size:12px;font-weight:900';

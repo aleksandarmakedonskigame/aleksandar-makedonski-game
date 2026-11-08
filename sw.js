@@ -1,85 +1,77 @@
-// ============================================================
-// МИСИЈА НА АЛЕКСАНДАР — SERVICE WORKER v1.7.1
-// Network-first for HTML/JS so old game code does not stay cached.
-// ============================================================
-
-const CACHE_NAME = 'alexander-quest-v1-8-3';
-const CORE_ASSETS = [
-  './',
-  './index.html?v=1.8.3',
-  './game.js?v=1.8.3',
-  './legacy.js?v=1.8.3',
-  './pwa.js?v=1.8.3',
-  './v13_world_protocol.js?v=1.8.3',
-  './v14_world_unique.js?v=1.8.3',
-  './v15_dynamic_gameplay.js?v=1.8.3',
-  './v16_player_identity_flags.js?v=1.8.3',
-  './v17_rhythm_identity.js?v=1.8.3',
-  './v18_proactive_agents.js?v=1.8.3',
-  './v181_clean_buttons.js?v=1.8.3',
-  './v183_level4_rescue_overlay.js?v=1.8.3',
-  './manifest.json?v=1.8.3'
+// WPA educational games - controlled public playtest cache.
+const CACHE_NAME = 'wpa-alex-playtest-2.3.4';
+const ASSETS = [
+  "./audio/pesna-patot-na-svetlinata.m4a",
+  "./certificate.html",
+  "./crossover.html",
+  "./edition.js",
+  "./game.js",
+  "./i18n.js",
+  "./icons/apple-touch-icon.png",
+  "./icons/favicon-16.png",
+  "./icons/favicon-32.png",
+  "./icons/icon-128.png",
+  "./icons/icon-144.png",
+  "./icons/icon-152.png",
+  "./icons/icon-192.png",
+  "./icons/icon-384.png",
+  "./icons/icon-512.png",
+  "./icons/icon-72.png",
+  "./icons/icon-96.png",
+  "./icons/icon-maskable-512.png",
+  "./icons/screenshot-desktop.png",
+  "./icons/screenshot-mobile.png",
+  "./index.html",
+  "./legacy.js",
+  "./manifest.json",
+  "./privacy.html",
+  "./pwa.js",
+  "./song.js",
+  "./sounds.js",
+  "./teacher.html",
+  "./v13_world_protocol.js",
+  "./v14_world_unique.js",
+  "./v15_dynamic_gameplay.js",
+  "./v16_player_identity_flags.js",
+  "./v17_rhythm_identity.js",
+  "./v181_clean_buttons.js",
+  "./v18_proactive_agents.js",
+  "./vendor/confetti.browser.js",
+  "./vendor/fonts.css",
+  "./vendor/fonts/caveat-cyrillic-400-normal.woff2",
+  "./vendor/fonts/caveat-cyrillic-700-normal.woff2",
+  "./vendor/fonts/caveat-latin-400-normal.woff2",
+  "./vendor/fonts/caveat-latin-700-normal.woff2",
+  "./vendor/fonts/forum-cyrillic-400-normal.woff2",
+  "./vendor/fonts/forum-latin-400-normal.woff2",
+  "./vendor/fonts/inter-cyrillic-400-normal.woff2",
+  "./vendor/fonts/inter-cyrillic-500-normal.woff2",
+  "./vendor/fonts/inter-cyrillic-600-normal.woff2",
+  "./vendor/fonts/inter-cyrillic-700-normal.woff2",
+  "./vendor/fonts/inter-latin-400-normal.woff2",
+  "./vendor/fonts/inter-latin-500-normal.woff2",
+  "./vendor/fonts/inter-latin-600-normal.woff2",
+  "./vendor/fonts/inter-latin-700-normal.woff2",
+  "./vendor/lucide.min.js",
+  "./vendor/phaser.min.js",
+  "./vendor/tailwind.css"
 ];
-
 self.addEventListener('install', event => {
-  self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(CORE_ASSETS).catch(() => null))
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then(async cache => {
+    for(const path of ASSETS){try{await cache.add(path);}catch(err){console.warn('[WPA SW] optional asset unavailable:',path);}}
+  }).then(()=>self.skipWaiting()));
 });
-
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
+  event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('wpa-alex-playtest-') && key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));
 });
-
 self.addEventListener('fetch', event => {
-  const request = event.request;
-  if (!request || request.method !== 'GET') return;
-
-  let url;
-  try { url = new URL(request.url); } catch (e) { return; }
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
-
-  const isHTML = request.mode === 'navigate' || url.pathname.endsWith('/index.html');
-  const isJS = url.pathname.endsWith('.js');
-
-  // Network-first for HTML and JS to avoid stale game code.
-  if (isHTML || isJS) {
-    event.respondWith(
-      fetch(request, { cache: 'no-store' })
-        .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, copy).catch(() => null));
-          return response;
-        })
-        .catch(() => caches.match(request).then(cached => cached || caches.match('./index.html?v=1.8.3')))
-    );
+  const req=event.request;
+  if(req.method!=='GET')return;
+  const url=new URL(req.url);
+  if(url.origin!==self.location.origin)return;
+  if(req.mode==='navigate') {
+    event.respondWith(fetch(req).then(res=>{if(res.ok){const clone=res.clone();caches.open(CACHE_NAME).then(c=>c.put(req,clone));}return res;}).catch(()=>caches.match(req).then(r=>r||caches.match('./index.html'))));
     return;
   }
-
-  // Cache-first for static assets.
-  event.respondWith(
-    caches.match(request).then(cached => {
-      if (cached) return cached;
-      return fetch(request).then(response => {
-        if (response && response.status === 200 && response.type !== 'opaque') {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, copy).catch(() => null));
-        }
-        return response;
-      });
-    })
-  );
-});
-
-self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
-  if (event.data && event.data.type === 'CLEAR_CACHE') {
-    event.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))));
-  }
+  event.respondWith(caches.match(req).then(hit=>hit||fetch(req)));
 });

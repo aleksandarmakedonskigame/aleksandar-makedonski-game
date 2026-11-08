@@ -1,6 +1,6 @@
 // ============================================================
-// ALEXANDER'S QUEST - THE PATH OF LIGHT — v1.8.2 LEVEL 4 LIGHT FIX
-// 37 Levels, 4 AI Agents, Stripe/PayPal, Social Networks
+// ALEXANDER'S QUEST - THE PATH OF LIGHT — v2.3.1
+// 37 Levels, historical advisors, honest premium unlock (access code)
 // Macedonian & English | LocalStorage Progress
 // ============================================================
 // ==================================================
@@ -67,7 +67,7 @@ const FriendshipPower = {
     { name: 'Аристотел', power: 'Мудрост', bonus: 'x2 поени од свитоци', unlocked: true },
     { name: 'Хефестион', power: 'Братство', bonus: '+50 монети на почеток', unlocked: true },
     { name: 'Букефал', power: 'Брзина', bonus: 'подвижност x1.5', unlocked: false },
-    { name: 'Птоломеј', power: 'Знаење', bonus: 'сите свитоци отклучени', unlocked: false },
+    { name: 'Птолемеј', power: 'Знаење', bonus: 'сите свитоци отклучени', unlocked: false },
     { name: 'Диоген', power: 'Светлина', bonus: 'нема темни нивоа', unlocked: false }
   ],
   
@@ -189,13 +189,13 @@ const SAVE_KEY = 'alexander_quest_save';
 const LEADER_KEY = 'alexander_quest_leaderboard';
 
 // ========== FAIR ACCESS / PREMIUM GATE ==========
-// Првите 8 нивоа се бесплатни. Од ниво 9 натаму играта бара Премиум поддршка ($0.99).
+// PUBLIC PLAYTEST: all 37 levels are free through sequential progression; paid edition is not active.
 // Ова е фер модел: децата и родителите можат да пробаат, а проектот добива поддршка за развој.
-const FREE_LEVEL_LIMIT = 8;
+const FREE_LEVEL_LIMIT = (window.GAME_EDITION && window.GAME_EDITION.fullUnlock) ? 37 : 8; // web: нивоа 1-8 бесплатни, 9-37 со код; itch/GameMonetize: целосно отклучено
 const PREMIUM_PRICE_USD = '0.99';
 
 function hasPremiumAccess() {
-  return Boolean(state?.premium || state?.premiumFree || state?.earlyAccess || state?.legendStatus);
+  return Boolean(state?.premium || state?.premiumFree || state?.earlyAccess || state?.legendStatus || (window.GAME_EDITION && window.GAME_EDITION.fullUnlock));
 }
 
 function isPremiumLevel(level) {
@@ -203,67 +203,69 @@ function isPremiumLevel(level) {
 }
 
 function showPremiumRequired(level) {
-  const msg =
-    '👑 Ниво ' + level + ' е дел од Премиум патеката.\n\n' +
-    'Првите ' + FREE_LEVEL_LIMIT + ' нивоа се бесплатни за сите.\n' +
-    'За да продолжиш од ниво 9 до 37, активирај Премиум поддршка за само $' + PREMIUM_PRICE_USD + '.\n\n' +
-    'Ова помага играта да се одржува, подобрува и развива понатаму.';
-
-  alert(msg);
-
-  if (typeof buyProduct === 'function') {
-    buyProduct('premium', 99);
-  } else {
-    showScreen('shop');
+  showScreen('shop');
+  if (window.PWA && PWA.showToast) {
+    PWA.showToast('👑 Ниво ' + level + ' е дел од Премиум патеката. Прашај родител.', 4200);
   }
 }
 
+// v2.0: место за секое ниво (се прикажува во воведната картичка)
+const LEVEL_PLACES = ['Пела','Пела','Пела','Миеза','Миеза','Пела','Гордион','Граник','Ис','Тир','Египет','Александрија','Сива','Гавгамела','Вавилон','Персепол','Персепол','Бактрија','Хинду Куш','Бактрија','Хидасп','Букефала','Хифасис','Инд','Гедросија','Суза','Суза','Патот на војската','Средоземјето','Исток и Запад','Александрија','Фарос','Коринт','Македонија','Вавилон','Вавилон','Светот'];
+
 const FACTS = [
-  {id:1, title:'Кралскиот Тутор', text:'Александар бил ученик на Аристотел, најголемиот филозоф во историјата!'},
-  {id:2, title:'Единство на Култури', text:'Александар го почитувал персиската култура и јазик на својот двор!'},
-  {id:3, title:'Големата Библиотека', text:'Библиотеката во Александрија имала стотици илјади свитоци!'},
-  {id:4, title:'Градот на Светлината', text:'Александрија била наречена "Светилникот на светот" заради своето знаење!'},
-  {id:5, title:'Мост на Мирување', text:'Александар градел мостови, не ѕидови - поврзувал луѓе и култури!'},
-  {id:6, title:'Армија на Единството', text:'Александар имал војници од 46 различни нации во својата армија!'},
-  {id:7, title:'Градови на Знаењето', text:'Основал над 70 градови, многу од нив наречени Александрија!'},
-  {id:8, title:'Јазик на Светот', text:'Коинето грчки, лингва франка на светот, се шири по целиот свет!'},
-  {id:9, title:'Медицински Напредок', text:'Хирурзите на Александар биле најдобри во античкиот свет!'},
-  {id:10, title:'Географски Откритија', text:'Експедициите на Александар ги пополниле празните места на картите!'},
-  {id:11, title:'Трговски Патишта', text:'Походите ги поврзале Истокот и Западот за трговија!'},
-  {id:12, title:'Круна на Мудроста', text:'На 12 години, Александар го примил Аристотел за учител. Знаењето е најголемата моќ!'},
-  {id:13, title:'Пустински Дух', text:'Александар ја поминал пустината Гедарозија со своите војници!'},
-  {id:14, title:'Планински Предизвик', text:'Ги освоил Hindu Kush планините на височина од 3000 метри!'},
-  {id:15, title:'Персиската Круна', text:'Александар ја примил персиската круна со почит кон нивната култура!'},
-  {id:16, title:'Египетскиот Оракул', text:'Оракулот во Сива го прогласил за син на Амон!'},
-  {id:17, title:'Бабилонскиот Храм', text:'Александар ги обновил храмовите во Вавилон со голема почит!'},
-  {id:18, title:'Пловечкиот Град', text:'Бродовите од Тир станале дел од поморската флота!'},
-  {id:19, title:'Пустинскиот Оазис', text:'Откриле нови оази во пустината што ги поврзувале градовите!'},
-  {id:20, title:'Силата на Тимот', text:'Александар секогаш водел од пред, а не од позади!'},
-  {id:21, title:'Индиската Авантура', text:'Александар стигнал до реката Биас во Индија!'},
-  {id:22, title:'Слоновите на Мирување', text:'Александар се восхитувал на индиските слонови!'},
-  {id:23, title:'Речната Битка', text:'Битката кај Хидаспис била една од најголемите во историјата!'},
-  {id:24, title:'Крилја на Победа', text:'Александар никогаш не изгубил битка во својот живот!'},
-  {id:25, title:'Океанскиот Сон', text:'Александар сонувал да го открие Индискиот Океан!'},
-  {id:26, title:'Пустинското Враќање', text:'Враќањето низ пустината Гедарозија било најтешкиот марш!'},
-  {id:27, title:'Сватбата на Единството', text:'Организирал масовна свадба во Суза за поврзување на културите!'},
-  {id:28, title:'Библиотеката од Соништата', text:'Александар сонувал за библиотека што ќе го собере целото човечко знаење!'},
-  {id:29, title:'Фараонот на Мирот', text:'Во Египет, Александар бил примен како ослободувач, не како освојувач!'},
-  {id:30, title:'Градот на Иднината', text:'Александрија ја планирал како главен град на светот!'},
-  {id:31, title:'Водичот на Звездите', text:'Научниците на Александар ги мапирале ѕвездите!'},
-  {id:32, title:'Уметноста на Единството', text:'Александар ги поттикнал уметниците да мешаат источни и западни стилови!'},
-  {id:33, title:'Трговскиот Пут', text:'Ги поврзал трговските патишта од Средоземјето до Индија!'},
-  {id:34, title:'Мостовите на Мирување', text:'Градел мостови наместо ѕидови - симбол на поврзување!'},
-  {id:35, title:'Децата на Светот', text:'Александар верувал дека сите луѓе се деца на еден Бог!'},
-  {id:36, title:'Светилникот на Надеж', text:'Фарос во Александрија бил едно од седумте светски чуда!'},
-  {id:37, title:'Вечната Светлина', text:'Александар починал со 32 години, но неговото наследство живее вечно! Светот е книга, а оние кои патуваат читаат повеќе страници!'},
+  {id:1, title:'Роден во Пела', text:'Александар е роден во 356 г. п.н.е. во Пела, престолнината на античка Македонија.'},
+  {id:2, title:'Семејството', text:'Татко му бил кралот Филип II, а мајка му Олимпијада, принцеза од Епир.'},
+  {id:3, title:'Букефал', text:'Како момче го скротил дивиот коњ Букефал: забележал дека коњот се плаши од својата сенка и го свртел кон сонцето.'},
+  {id:4, title:'Учителот Аристотел', text:'Од околу 13-годишна возраст Александар учел кај филозофот Аристотел во Миеза.'},
+  {id:5, title:'Книгата под перницата', text:'Според Плутарх, Александар ја носел „Илијада“ од Хомер насекаде и ја чувал под перницата.'},
+  {id:6, title:'Крал на 20 години', text:'Станал крал во 336 г. п.н.е., кога имал само 20 години.'},
+  {id:7, title:'Гордиевиот јазол', text:'Во Гордион, според легендата, го пресекол Гордиевиот јазол — симбол за решавање тежок проблем на нов начин.'},
+  {id:8, title:'Реката Граник', text:'Првата голема битка од походот кон Азија била кај реката Граник, во 334 г. п.н.е.'},
+  {id:9, title:'Битката кај Ис', text:'Во 333 г. п.н.е. кај Ис ја победил војската на персискиот крал Дариј III.'},
+  {id:10, title:'Опсадата на Тир', text:'Островскиот град Тир го освоил по седуммесечна опсада, откако изградил насип од копното до островот.'},
+  {id:11, title:'Фараон во Египет', text:'Во Египет, кој бил под персиска власт, Александар бил примен и прогласен за фараон.'},
+  {id:12, title:'Основање на Александрија', text:'Во 331 г. п.н.е. ја основал Александрија во Египет, која подоцна станала еден од најважните градови на антиката.'},
+  {id:13, title:'Оракулот во Сива', text:'Патувал низ пустината до оракулот на богот Амон во оазата Сива.'},
+  {id:14, title:'Гавгамела', text:'Во 331 г. п.н.е. кај Гавгамела ја поразил големата персиска војска на Дариј III.'},
+  {id:15, title:'Вавилон', text:'Древниот град Вавилон му ги отворил портите без борба.'},
+  {id:16, title:'Персепол', text:'Стигнал до Персепол, свечениот главен град на Персиското Царство.'},
+  {id:17, title:'Нови обичаи', text:'Прифатил некои персиски обичаи и облека, за да ги поврзе Македонците и Персијците.'},
+  {id:18, title:'Градови со негово име', text:'Основал многу градови, а повеќе од нив го носеле името Александрија.'},
+  {id:19, title:'Хинду Куш', text:'Неговата војска ги преминала високите и студени планини Хинду Куш.'},
+  {id:20, title:'Роксана', text:'Во 327 г. п.н.е. се оженил со Роксана, ќерка на благородник од Бактрија.'},
+  {id:21, title:'Реката Хидасп', text:'Во 326 г. п.н.е. кај реката Хидасп во Индија се борел против кралот Пор, кој имал воени слонови. По битката, Пор останал да владее.'},
+  {id:22, title:'Градот Букефала', text:'Кога верниот Букефал угинал, Александар во негова чест го основал градот Букефала.'},
+  {id:23, title:'Реката Хифасис', text:'Кај реката Хифасис уморните војници побарале да се вратат дома по осум години поход — и Александар ги послушал.'},
+  {id:24, title:'Флотата на Неарх', text:'Неговиот пријател Неарх водел флота од реката Инд до Персискиот Залив и истражувал непознати брегови.'},
+  {id:25, title:'Гедросиската пустина', text:'Враќањето низ Гедросиската пустина било едно од најтешките патувања на војската.'},
+  {id:26, title:'Свадбите во Суза', text:'Во 324 г. п.н.е. во Суза приредил големи свадби меѓу македонски војници и персиски невести.'},
+  {id:27, title:'Хефестион', text:'Хефестион бил најблискиот пријател на Александар уште од детството.'},
+  {id:28, title:'Мерачи на чекори', text:'Со војската патувале мерачи (биматисти) кои ги броеле чекорите за да ги измерат растојанијата.'},
+  {id:29, title:'Заеднички јазик', text:'По неговите походи, грчкиот јазик коине станал заеднички јазик за трговија и учење на огромен простор.'},
+  {id:30, title:'Хеленистичкиот свет', text:'Времето по Александар се вика хеленистички период — тогаш културите на Истокот и Западот силно се мешале.'},
+  {id:31, title:'Александриската библиотека', text:'Големата библиотека во Александрија ја изградиле Птолемеите по неговата смрт, во градот што тој го основал.'},
+  {id:32, title:'Светилникот Фарос', text:'Светилникот Фарос во Александрија, изграден по смртта на Александар, станал едно од седумте чуда на античкиот свет.'},
+  {id:33, title:'Средба со Диоген', text:'Според преданието, кога Александар го прашал филозофот Диоген што сака, тој одговорил: „Тргни се малку, ми го закриваш сонцето.“'},
+  {id:34, title:'Голем војсководец', text:'Според античките историчари, Александар не изгубил ниту една голема битка.'},
+  {id:35, title:'Вавилон, 323 г. п.н.е.', text:'Александар починал во Вавилон во 323 г. п.н.е., на само 32 години.'},
+  {id:36, title:'Дијадосите', text:'По неговата смрт, царството го поделиле неговите генерали, наречени дијадоси (наследници).'},
+  {id:37, title:'Вечната приказна', text:'Приказната за Александар се раскажува повеќе од 2.300 години, на многу јазици, во книги, песни и уметност.'},
 ];
 
 // ========== SAVE / LOAD ==========
 function getState() {
+  const defaults = defaultState();
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      if (saved && typeof saved === 'object') return Object.assign(defaults, saved);
+    }
   } catch(e) {}
+  return defaults;
+}
+
+function defaultState() {
   return {
     playerName: 'Гостин',
     currentLevel: 1,
@@ -302,10 +304,17 @@ function getState() {
 }
 
 function saveState(s) {
-  localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(s)); } catch (e) { console.warn('[AQ] save failed', e); }
 }
 
 let state = getState();
+
+// v1.9: единствен извор на прогресот. Сите додатоци (v13–v18, pwa.js)
+// читаат и пишуваат преку AQStore, за да не се бришат меѓусебно промените.
+window.AQStore = {
+  read() { return state; },
+  write(s) { if (s && s !== state) Object.assign(state, s); saveState(state); }
+};
 
 function getLeaderboard() {
   try { return JSON.parse(localStorage.getItem(LEADER_KEY) || '[]'); } catch(e) { return []; }
@@ -320,6 +329,7 @@ function showScreen(name) {
   if (name === 'museum') renderMuseum();
   if (name === 'rewards') renderRewards();
   if (name === 'leaderboard') renderLeaderboard();
+  if (name === 'shop' && typeof refreshPremiumUI === 'function') refreshPremiumUI();
   // 🏛️ Living Legacy auto-renders
   if (name === 'passport' && typeof Legacy !== 'undefined') Legacy.showPassport();
   if (name === 'wisdomwall' && typeof Legacy !== 'undefined') Legacy.renderWisdomWall();
@@ -417,9 +427,6 @@ function startLevel(level) {
   saveState(state);
   updateMenu();
 
-  // 👁️ Magic Tracking
-  if(window.MagicTracking) MagicTracking.trackLevelStart(level);
-
   document.getElementById('hud-level').textContent = level;
   document.getElementById('hud-episode').textContent = level<=12?1:level<=24?2:3;
   document.getElementById('hud-episode-name').textContent = EPISODES[level<=12?0:level<=24?1:2].name;
@@ -457,10 +464,43 @@ class GameplayScene extends Phaser.Scene {
 
   preload() {
     // Create textures programmatically
-    const pg = this.make.graphics({x:0,y:0,add:false});
-    pg.fillStyle(0x4A90E2,1);pg.fillRoundedRect(0,0,24,36,3);
-    pg.fillStyle(0xFFD700,1);pg.fillCircle(12,8,5);
-    pg.generateTexture('player',24,36);
+    // v1.9: нацртан лик на Александар (шлем со перјаница, наметка, оклоп)
+    // наместо сината правоаголна кутија. 4 рамки: стои, трча×2, скок.
+    const drawHero = (key, frame) => {
+      const g = this.make.graphics({x:0,y:0,add:false});
+      const px = (x,y,w,h,c)=>{ g.fillStyle(c,1); g.fillRect(x,y,w,h); };
+      const SKIN=0xF1C27D, BRONZE=0xC9A227, BRONZE_D=0x8C6D12, RED=0xB3261E, RED_D=0x7F1712,
+            BLUE=0x2B4C9B, GOLD=0xFFD54A, BROWN=0x6B3E1E, DARK=0x1A1525;
+      // наметка (позади телото)
+      const capeSwing = frame==='run1'?1:frame==='run2'?-1:frame==='jump'?2:0;
+      px(3-capeSwing,12,6,15,RED_D); px(4-capeSwing,12,5,14,RED);
+      // перјаница
+      px(8,0,9,2,RED); px(7,1,2,3,RED); px(15,1,3,3,RED_D);
+      // шлем
+      px(7,3,11,4,BRONZE); px(7,7,3,6,BRONZE); px(16,6,2,2,BRONZE_D);
+      // лице
+      px(10,7,7,6,SKIN); px(14,8,2,2,DARK); px(16,11,1,1,0xD9A066);
+      // врат
+      px(11,13,4,1,SKIN);
+      // оклоп
+      px(8,14,10,8,BRONZE); px(9,15,8,1,GOLD); px(9,18,8,1,BRONZE_D); px(12,16,2,2,GOLD);
+      // рака напред
+      const armY = frame==='jump'?12:15;
+      px(18,armY,3,6,SKIN); px(18,armY,3,2,BRONZE_D);
+      // поличка (хитон)
+      px(8,22,10,4,BLUE); px(8,25,10,1,GOLD);
+      // нозе
+      if(frame==='run1'){ px(9,26,3,6,SKIN); px(15,26,3,5,SKIN); px(8,32,4,3,BROWN); px(15,31,4,3,BROWN); }
+      else if(frame==='run2'){ px(10,26,3,5,SKIN); px(13,26,3,6,SKIN); px(9,31,4,3,BROWN); px(13,32,4,3,BROWN); }
+      else if(frame==='jump'){ px(9,26,3,4,SKIN); px(14,26,3,5,SKIN); px(8,30,4,3,BROWN); px(15,31,4,3,BROWN); }
+      else { px(10,26,3,7,SKIN); px(14,26,3,7,SKIN); px(9,33,4,3,BROWN); px(14,33,4,3,BROWN); }
+      g.generateTexture(key,24,36);
+      g.destroy();
+    };
+    drawHero('player','stand');
+    drawHero('player_run1','run1');
+    drawHero('player_run2','run2');
+    drawHero('player_jump','jump');
 
     const p1=this.make.graphics({x:0,y:0,add:false});
     p1.fillStyle(0x2D6B3F,1);p1.fillRect(0,0,64,4);
@@ -492,10 +532,25 @@ class GameplayScene extends Phaser.Scene {
     cpg.fillStyle(0xFFD700,1);cpg.fillCircle(8,8,3);
     cpg.generateTexture('cp',16,16);
 
+    // v2.0: порта на целта (два столба, лак, знаме) наместо жолта кутија
     const eg=this.make.graphics({x:0,y:0,add:false});
-    eg.fillStyle(0xFFD700,1);eg.fillRoundedRect(0,0,36,50,4);
-    eg.fillStyle(0xFFFFFF,0.6);eg.fillCircle(18,25,10);
-    eg.generateTexture('end',36,50);
+    eg.fillStyle(0xBFA66A,1); eg.fillRect(6,30,14,80); eg.fillRect(60,30,14,80);
+    eg.fillStyle(0xD9C27A,1); eg.fillRect(2,104,22,6); eg.fillRect(56,104,22,6); eg.fillRect(2,26,22,6); eg.fillRect(56,26,22,6);
+    eg.fillStyle(0xFFD700,1); eg.fillRect(0,18,80,10);
+    eg.fillTriangle(0,18,40,0,80,18);
+    eg.fillStyle(0xB8860B,1); eg.fillCircle(40,11,4);
+    eg.fillStyle(0xFFF2B0,0.35); eg.fillRect(20,32,40,78);
+    eg.generateTexture('end',80,110);
+
+    const flg=this.make.graphics({x:0,y:0,add:false});
+    flg.fillStyle(0x8B5A2B,1); flg.fillRect(0,0,3,40);
+    flg.fillStyle(0xC8102E,1); flg.fillTriangle(3,2,30,10,3,18);
+    flg.fillStyle(0xFFD700,1); flg.fillCircle(11,10,3);
+    flg.generateTexture('goal_flag',32,40);
+
+    const dust=this.make.graphics({x:0,y:0,add:false});
+    dust.fillStyle(0xE8DCC0,1); dust.fillCircle(4,4,4);
+    dust.generateTexture('dust',8,8);
 
     // v1.7 Dynamic textures: stars, meteors, obstacles, super power orb, landmarks
     const starG=this.make.graphics({x:0,y:0,add:false});
@@ -571,15 +626,23 @@ class GameplayScene extends Phaser.Scene {
     this.superJumpUntil=0;
     this.dynamicStarsCollected=0;
 
-    // Build level
-    this.buildLevel(this.lvl);
-    this.decorateDynamicWorld(this.lvl);
-    this.addDynamicGameplay(this.lvl);
-    this.showDynamicMission(this.lvl);
+    // Build level — v2.0: секое ниво е секогаш исто (фиксно „семе“),
+    // за детето да може да го научи и да го надмине.
+    const _rnd=Math.random;
+    let _seed=(this.lvl*7919+104729)>>>0;
+    Math.random=()=>{ _seed=(Math.imul(_seed,1664525)+1013904223)>>>0; return _seed/4294967296; };
+    try {
+      this.buildLevel(this.lvl);
+      this.decorateDynamicWorld(this.lvl);
+      this.addDynamicGameplay(this.lvl);
+    } finally { Math.random=_rnd; }
+    this.addGoalAndIntro(this.lvl);
 
     // Player
     this.player=this.physics.add.sprite(80,350,'player');
     this.player.setBounce(0.1).setCollideWorldBounds(false).setGravityY(800);
+    this.player.setDepth(20);
+    this.respawnX=80;
     this.cursors=this.input.keyboard.createCursorKeys();
     this.wasd=this.input.keyboard.addKeys({A:Phaser.Input.Keyboard.KeyCodes.A,D:Phaser.Input.Keyboard.KeyCodes.D,W:Phaser.Input.Keyboard.KeyCodes.W,SPACE:Phaser.Input.Keyboard.KeyCodes.SPACE});
 
@@ -626,8 +689,8 @@ class GameplayScene extends Phaser.Scene {
 
       // Moving platforms for higher levels
       if(l>8 && Math.random()>0.7) {
-        const mp=this.platforms.create(x+60,y-80,tex).refreshBody();
-        this.tweens.add({targets:mp,y:y-40,y:y-100,duration:2000+l*100,yoyo:true,repeat:-1,ease:'Sine.InOut'});
+        const mp=this.platforms.create(x+60,y-60,tex).refreshBody();
+        this.tweens.add({targets:mp,y:y-110,duration:2000+l*100,yoyo:true,repeat:-1,ease:'Sine.InOut',onUpdate:()=>mp.refreshBody()});
       }
     }
 
@@ -643,7 +706,9 @@ class GameplayScene extends Phaser.Scene {
     if(l>15) this.cpGroup.create(2200,groundY-30,'cp');
 
     // Endpoint
-    this.endpoint=this.physics.add.sprite(W-150,groundY-60,'end');
+    this.endpoint=this.physics.add.sprite(W-150,groundY-8-55,'end');
+    this.endpoint.setDepth(5);
+    this.endpoint.body.setSize(30,100).setOffset(25,10);
     this.endpoint.setImmovable(true);
     this.endpoint.body.allowGravity=false;
 
@@ -651,20 +716,76 @@ class GameplayScene extends Phaser.Scene {
     if(l>3) {
       const pitCount=Math.min(Math.floor(l/3),5);
       for(let i=0;i<pitCount;i++){
-        const px=400+i*400+(l*50)%300;
-        // Remove ground platforms at pit positions
-        this.platforms.children.iterate(child=>{
-          if(Math.abs(child.x-px)<40) this.platforms.remove(child,true);
-        });
+        let px=650+i*420+(l*50)%260;
+        if(Math.abs(px-1400)<90||Math.abs(px-2200)<90) px+=140;
+        // Remove ground platforms at pit positions.
+        // v1.9 FIX: порано се бришеше за време на iterate() → TypeError и празна
+        // (темна) сцена од ниво 4 до 37. Сега прво се собираат, па се бришат.
+        const toRemove=this.platforms.getChildren().filter(child=>child&&child.y>=groundY-1&&Math.abs(child.x-px)<32);
+        toRemove.forEach(child=>this.platforms.remove(child,true,true));
       }
+    }
+  }
+
+  // ========== v2.0: ЦЕЛ, ВОВЕД, НАПРЕДОК ==========
+  addGoalAndIntro(l){
+    const gx=this.endpoint.x, gy=this.endpoint.y;
+    const glow=this.add.circle(gx,gy,90,0xFFD700,0.14).setDepth(4);
+    this.tweens.add({targets:glow,scale:1.25,alpha:0.05,duration:1100,yoyo:true,repeat:-1});
+    const flag=this.add.image(gx+48,gy-70,'goal_flag').setOrigin(0,1).setDepth(6);
+    this.tweens.add({targets:flag,scaleX:0.82,duration:420,yoyo:true,repeat:-1,ease:'Sine.InOut'});
+    this.add.text(gx,gy-82,(window.I18N&&I18N.lang()==='en'?'FINISH':'🏁 ЦЕЛ'),{fontSize:'18px',color:'#FFD700',fontFamily:'Inter',fontStyle:'bold',stroke:'#0F0C18',strokeThickness:4}).setOrigin(0.5).setDepth(6);
+    // насочувачки стрелки на земјата на секои 600px
+    for(let x=700;x<gx-200;x+=600){
+      const a=this.add.text(x,395,'➜',{fontSize:'26px',color:'#FFD700'}).setAlpha(0.5).setDepth(3);
+      this.tweens.add({targets:a,x:x+14,alpha:0.85,duration:700,yoyo:true,repeat:-1});
+    }
+    // воведна картичка
+    const place=(window.I18N&&I18N.lang()==='en')?['Pella','Pella','Pella','Mieza','Mieza','Pella','Gordium','Granicus','Issus','Tyre','Egypt','Alexandria','Siwa','Gaugamela','Babylon','Persepolis','Persepolis','Bactria','Hindu Kush','Bactria','Hydaspes','Bucephala','Hyphasis','Indus','Gedrosia','Susa','Susa','Army route','Mediterranean','East and West','Alexandria','Pharos','Corinth','Macedonia','Babylon','Babylon','The world'][l-1]:((typeof LEVEL_PLACES!=='undefined'&&LEVEL_PLACES[l-1])||'');
+    const fact=(window.I18N&&I18N.fact&&I18N.fact((l-1)%FACTS.length))||FACTS[(l-1)%FACTS.length];
+    const cam=this.cameras.main;
+    const card=this.add.container(cam.width/2,cam.height/2-40).setScrollFactor(0).setDepth(100);
+    const bg=this.add.rectangle(0,0,440,120,l<=4?0x19354B:0x0F0C18,0.90).setStrokeStyle(2,0xFFD700,0.85);
+    const t1=this.add.text(0,-30,(window.I18N&&I18N.lang()==='en'?'Level ':'Ниво ')+l+(place?' · '+place:''),{fontSize:'28px',color:'#FFD700',fontFamily:'Forum, serif'}).setOrigin(0.5);
+    const t2=this.add.text(0,12,fact?('📜 '+fact.title):'',{fontSize:'16px',color:'#FFF8E7',fontFamily:'Inter'}).setOrigin(0.5);
+    const t3=this.add.text(0,40,(window.I18N&&I18N.lang()==='en'?'Reach the finish gate':'Стигни до 🏁 портата'),{fontSize:'13px',color:'#c9c2b0',fontFamily:'Inter'}).setOrigin(0.5);
+    card.add([bg,t1,t2,t3]); card.setScale(0.7); card.setAlpha(0);
+    this.tweens.add({targets:card,alpha:1,scale:1,duration:350,ease:'Back.Out'});
+    this.tweens.add({targets:card,alpha:0,y:card.y-30,delay:2300,duration:450,onComplete:()=>card.destroy()});
+    this.goalX=gx;
+    this.updateProgress(true);
+  }
+
+  updateProgress(force){
+    const bar=document.getElementById('aq-progress-fill');
+    if(!bar||!this.player) return;
+    const pct=Math.max(0,Math.min(100,(this.player.x-80)/((this.goalX||2850)-80)*100));
+    if(force||Math.abs(pct-(this._lastPct||0))>0.5){ bar.style.width=pct+'%'; this._lastPct=pct; }
+  }
+
+  floatText(x,y,txt,color){
+    const t=this.add.text(x,y,txt,{fontSize:'16px',color:color||'#FFD700',fontFamily:'Inter',fontStyle:'bold',stroke:'#0F0C18',strokeThickness:3}).setOrigin(0.5).setDepth(30);
+    this.tweens.add({targets:t,y:y-36,alpha:0,duration:700,onComplete:()=>t.destroy()});
+  }
+
+  landingDust(){
+    for(let i=0;i<6;i++){
+      const d=this.add.image(this.player.x+Phaser.Math.Between(-8,8),this.player.y+17,'dust').setDepth(19).setAlpha(0.7).setScale(0.6);
+      this.tweens.add({targets:d,x:d.x+Phaser.Math.Between(-22,22),y:d.y-Phaser.Math.Between(2,10),alpha:0,scale:1.4,duration:380,onComplete:()=>d.destroy()});
     }
   }
 
   // ========== v1.7 FULL GAMEPLAY REVISION ==========
   decorateDynamicWorld(l){
     const W=3000;
-    const palette = l<=8
-      ? {sky1:0x10162F,sky2:0x1A2E46,mountain:0x263B55,ruin:0xBFA66A}
+    // v2.2.1: Bright and readable early levels. Levels 1-3 are daylight,
+    // level 4 is luminous twilight; later levels preserve their own atmosphere.
+    const palette = l<=3
+      ? {sky1:0x447EA8,sky2:0xAED4D6,mountain:0x486C7C,ruin:0xEBD197}
+      : l===4
+      ? {sky1:0x375A87,sky2:0x86AAC0,mountain:0x405E78,ruin:0xE9C98D}
+      : l<=8
+      ? {sky1:0x203658,sky2:0x476580,mountain:0x304C66,ruin:0xD5BA86}
       : l<=16
       ? {sky1:0x1C1426,sky2:0x402315,mountain:0x5D3B22,ruin:0xD4A54D}
       : l<=24
@@ -672,14 +793,26 @@ class GameplayScene extends Phaser.Scene {
       : {sky1:0x120B20,sky2:0x2D1744,mountain:0x3B2A55,ruin:0xFFD700};
 
     const bg=this.add.graphics();
-    bg.fillGradientStyle(palette.sky1,palette.sky1,palette.sky2,palette.sky2,1);
-    bg.fillRect(0,0,W,500);
+    // Cross-renderer sky bands: Phaser Graphics.fillGradientStyle is not reliable
+    // on the Canvas renderer, which left the first levels looking pitch black.
+    // Explicit flat-color bands render on both Canvas and WebGL.
+    const blendColor = (c1,c2,t) => {
+      const blend = shift => Math.round(((c1 >> shift)&255)*(1-t)+((c2 >> shift)&255)*t);
+      return (blend(16)<<16)|(blend(8)<<8)|blend(0);
+    };
+    const skyBands=32;
+    for(let i=0;i<skyBands;i++){
+      const t=i/(skyBands-1);
+      bg.fillStyle(blendColor(palette.sky1,palette.sky2,t),1);
+      bg.fillRect(0,Math.floor(i*500/skyBands),W,Math.ceil(500/skyBands)+1);
+    }
     bg.setDepth(-30);
 
-    // Moon / sun glow
+    // Sun / bright sky guide. Keep gameplay text and player legible from frame 1.
     const orbX=260+(l%5)*60;
-    this.add.circle(orbX,80,58,0xFFDFA6,0.16).setDepth(-25);
-    this.add.circle(orbX,80,32,0xFFD700,0.20).setDepth(-24);
+    const earlyDay = l <= 4;
+    this.add.circle(orbX,80,earlyDay?84:58,0xFFF2D0,earlyDay?0.36:0.16).setDepth(-25);
+    this.add.circle(orbX,80,earlyDay?42:32,0xFFE49A,earlyDay?0.55:0.20).setDepth(-24);
 
     // Mountains
     const mg=this.add.graphics();
@@ -691,7 +824,7 @@ class GameplayScene extends Phaser.Scene {
     mg.setDepth(-22);
 
     // Ancient pillars / ruins
-    for(let x=360;x<W;x+=420){
+    for(let x=360;x<W-280;x+=420){
       const baseY=408+((x+l*17)%24);
       const p=this.add.image(x,baseY,'dyn_pillar');
       p.setAlpha(0.38);
@@ -727,24 +860,14 @@ class GameplayScene extends Phaser.Scene {
     startGlow.fillCircle(220,300,70);
     startGlow.setDepth(-3);
 
-    const startText=this.add.text(95,160,'Патот е жив — следи ја светлината', {
-      fontSize:'18px',
-      color:'#FFD700',
-      fontFamily:'Inter',
-      fontStyle:'bold',
-      stroke:'#0F0C18',
-      strokeThickness:4
-    });
-    startText.setDepth(6);
-    startText.setAlpha(0.86);
-    this.tweens.add({targets:startText,alpha:0.45,duration:1400,yoyo:true,repeat:-1});
+    // v2.0: стариот натпис на почетокот е заменет со воведната картичка
 
     // Level 4 gets extra visible identity: Meteors / stars / ruins from the first screen.
     if(l===4){
-      const title=this.add.text(130,105,'Ниво 4 · Небесни Знаци', {
+      const title=this.add.text(130,105,(window.I18N&&I18N.lang()==='en'?'Mieza | Path of Learning':'Миеза · Патот на учењето'), {
         fontSize:'24px',
         color:'#9fd0ff',
-        fontFamily:'Cinzel Decorative',
+        fontFamily:'Forum, serif',
         stroke:'#0F0C18',
         strokeThickness:5
       });
@@ -800,7 +923,11 @@ class GameplayScene extends Phaser.Scene {
     // Obstacles start early, but stay fair
     const hazardCount= l<3 ? 3 : Math.min(10,4+Math.floor(l/3));
     for(let i=0;i<hazardCount;i++){
-      const x=520+i*(2200/hazardCount)+Phaser.Math.Between(-45,45);
+      let x=520+i*(2200/hazardCount)+Phaser.Math.Between(-45,45);
+      // v1.9: огнот не смее да стои над дупка или веднаш до неа
+      const groundXs=this.platforms.getChildren().filter(c=>c.y>=455).map(c=>c.x);
+      const solid=(xx)=>groundXs.some(gx=>Math.abs(gx-xx)<=32);
+      for(let k=0;k<6&&!(solid(x)&&solid(x-70)&&solid(x+70));k++) x+=70;
       const h=this.dynamicHazardGroup.create(x,438,'dyn_fire');
       h.setDepth(8);
       h.setData('lastHit',0);
@@ -860,13 +987,14 @@ class GameplayScene extends Phaser.Scene {
   onDynamicStar(p,st){
     if(!st.active)return;
     this.particles(st.x,st.y,0xFFD700,9);
+    this.floatText(st.x,st.y-10,'+25');
     if(window.GameSounds) GameSounds.coin();
     st.disableBody(true,true);
     this.dynamicStarsCollected++;
     this.coins++;
     this.score+=25;
     state.totalCoins=(state.totalCoins||0)+1;
-    state.wisdomPoints=(state.wisdomPoints||0)+5;
+    if(window.AQV13&&AQV13.addWisdomQuiet) AQV13.addWisdomQuiet(5);
     saveState(state);
     const hud=document.getElementById('hud-coins');
     if(hud)hud.textContent=state.totalCoins;
@@ -878,7 +1006,7 @@ class GameplayScene extends Phaser.Scene {
     this.superJumpUntil=this.time.now+14000;
     this.canDJ=true;
     this.score+=80;
-    state.wisdomPoints=(state.wisdomPoints||0)+10;
+    if(window.AQV13&&AQV13.addWisdomQuiet) AQV13.addWisdomQuiet(10);
     saveState(state);
     this.particles(power.x,power.y,0x4A90E2,18);
     if(window.AQDynamic&&AQDynamic.toast){
@@ -894,8 +1022,7 @@ class GameplayScene extends Phaser.Scene {
     this.dynamicFalls++;
     this.score=Math.max(0,this.score-35);
     this.particles(this.player.x,this.player.y,0xFF6B35,12);
-    this.player.setVelocity(0,0);
-    this.player.setPosition(Math.max(80,this.player.x-130),350);
+    this.hurtPlayer();
     if(window.GameSounds) GameSounds.hit();
     if(window.AQDynamic&&AQDynamic.toast){
       AQDynamic.toast('<strong>🔥 Предизвик!</strong><br>Патот на Александар бара внимание и мудрост.',2600);
@@ -921,6 +1048,7 @@ class GameplayScene extends Phaser.Scene {
     this.particles(s.x,s.y,0xFFA500,8);
     if(window.GameSounds) GameSounds.scroll();
     s.destroy();this.scrolls++;
+    const hs=document.getElementById('hud-scrolls'); if(hs) hs.textContent=this.scrolls;
     const fx = getCompanionEffects();
     this.score += Math.floor(50 * fx.score);
     // Auto-collect with knowledge companion
@@ -944,6 +1072,8 @@ class GameplayScene extends Phaser.Scene {
   onCp(p,cp){
     if(cp.getData('act'))return;
     cp.setData('act',true);
+    this.respawnX=cp.x;
+    if(window.PWA&&PWA.showToast) PWA.showToast('🚩 Контролна точка зачувана',1600);
     this.particles(cp.x,cp.y,0xFF6B35,8);
     this.tweens.add({targets:cp,scale:1.5,alpha:0,duration:400});
   }
@@ -951,6 +1081,12 @@ class GameplayScene extends Phaser.Scene {
   onEnd(){
     if(this.ended)return;this.ended=true;this.timer.destroy();
     this.particles(this.player.x,this.player.y,0xFFD700,15);
+    // v2.0: кратко славење пред прозорецот за крај
+    this.player.setVelocity(0,0); this.player.body.allowGravity=false;
+    this.tweens.add({targets:this.player,x:this.endpoint.x,alpha:0.2,duration:700,ease:'Sine.In'});
+    this.cameras.main.flash(350,255,215,0);
+    if(typeof confetti==='function') confetti({particleCount:90,spread:80,origin:{y:0.55},colors:['#FFD700','#FFA500','#4A90E2']});
+    const bar=document.getElementById('aq-progress-fill'); if(bar) bar.style.width='100%';
     if(window.GameSounds) GameSounds.victory();
     const tb=Math.max(0,300-this.timeE)*5;
     this.score+=tb;
@@ -995,13 +1131,27 @@ class GameplayScene extends Phaser.Scene {
     // Kingdom coins
     earnKingdomCoins(this.score);
 
-    // 👁️ Magic Tracking
-    if(window.MagicTracking){
-      MagicTracking.trackLevelComplete(this.lvl, this.score, stars, this.timeE);
-      MagicTracking.trackCoinCollected(this.coins);
-    }
+    const _args=[this.lvl,this.score,this.coins,this.scrolls,this.timeE,stars];
+    setTimeout(()=>showLevelComplete(..._args),900);
+  }
 
-    showLevelComplete(this.lvl,this.score,this.coins,this.scrolls,this.timeE,stars);
+  hurtPlayer(){
+    const now=this.time.now;
+    if(this.invulnUntil&&now<this.invulnUntil)return false;
+    this.invulnUntil=now+1300;
+    const dir=this.player.flipX?1:-1;
+    this.player.setVelocity(160*dir,-330);
+    this.tweens.add({targets:this.player,alpha:0.25,duration:110,yoyo:true,repeat:5,onComplete:()=>this.player.setAlpha(1)});
+    if(this.cameras&&this.cameras.main) this.cameras.main.shake(140,0.006);
+    return true;
+  }
+
+  respawn(){
+    const x=this.respawnX||80;
+    this.player.setVelocity(0,0);
+    this.player.setPosition(x,330);
+    this.invulnUntil=this.time.now+1200;
+    this.tweens.add({targets:this.player,alpha:0.25,duration:120,yoyo:true,repeat:4,onComplete:()=>this.player.setAlpha(1)});
   }
 
   particles(x,y,c,n){
@@ -1014,31 +1164,42 @@ class GameplayScene extends Phaser.Scene {
   update(){
     if(this.ended)return;
     this.updateDynamicMeteors();
+    if(this.player.x<12){this.player.x=12;if(this.player.body.velocity.x<0)this.player.setVelocityX(0);}
     // Apply companion effects
     const fx = getCompanionEffects();
     const touchKeys = window.__AQ_TOUCH_KEYS || {};
     const left=this.cursors.left.isDown||this.wasd.A.isDown||touchKeys.ArrowLeft;
     const right=this.cursors.right.isDown||this.wasd.D.isDown||touchKeys.ArrowRight;
-    const jump=Phaser.Input.Keyboard.JustDown(this.cursors.space)||Phaser.Input.Keyboard.JustDown(this.cursors.up)||Phaser.Input.Keyboard.JustDown(this.wasd.W)||Phaser.Input.Keyboard.JustDown(this.wasd.SPACE)||touchKeys.Space;
+    const touchJump=!!touchKeys.Space&&!this._prevTouchJump;
+    this._prevTouchJump=!!touchKeys.Space;
+    const jump=Phaser.Input.Keyboard.JustDown(this.cursors.space)||Phaser.Input.Keyboard.JustDown(this.cursors.up)||Phaser.Input.Keyboard.JustDown(this.wasd.W)||Phaser.Input.Keyboard.JustDown(this.wasd.SPACE)||touchJump;
 
     const speed = 200 * fx.speed;
     if(left){this.player.setVelocityX(-speed);this.player.setFlipX(true);}
     else if(right){this.player.setVelocityX(speed);this.player.setFlipX(false);}
     else this.player.setVelocityX(0);
 
-    const ground=this.player.body.touching.down;
+    const ground=this.player.body.touching.down||this.player.body.blocked.down;
+    if(ground&&this._wasAir&&this._fallSpeed>260) this.landingDust();
+    this._wasAir=!ground; if(!ground) this._fallSpeed=this.player.body.velocity.y;
+    this.updateProgress();
     if(ground)this.jumps=0;
-    const jumpPower = 400 * fx.jump * (this.superJumpUntil && this.time.now < this.superJumpUntil ? 1.75 : 1);
+    const jumpPower = 520 * fx.jump * (this.superJumpUntil && this.time.now < this.superJumpUntil ? 1.75 : 1);
     if(jump){
       if(ground){this.player.setVelocityY(-jumpPower);this.jumps=1;this.particles(this.player.x,this.player.y+15,0x4A90E2,3);}
       else if((this.canDJ||fx.jump>1.3)&&this.jumps<2){this.player.setVelocityY(-jumpPower*0.85);this.jumps=2;this.particles(this.player.x,this.player.y+15,0x4A90E2,5);}
     }
 
+    // анимација на ликот
+    let tex='player';
+    if(!ground) tex='player_jump';
+    else if(Math.abs(this.player.body.velocity.x)>10) tex=(Math.floor(this.time.now/120)%2)?'player_run1':'player_run2';
+    if(this.player.texture.key!==tex) this.player.setTexture(tex);
+
     if(this.player.y>520){
-      this.player.setVelocity(0,0);
-      this.player.setPosition(80,350);
-      // 👁️ Magic Tracking — player fell
-      if(window.MagicTracking) MagicTracking.trackDeath(this.lvl);
+      this.dynamicFalls=(this.dynamicFalls||0)+1;
+      this.respawn();
+      if(window.PWA&&PWA.showToast) PWA.showToast('Се враќаш на последната контролна точка 🚩',1800);
     }
   }
 }
@@ -1065,7 +1226,7 @@ function showLevelComplete(level,score,coins,scrolls,time,stars){
   document.getElementById('modal-complete').classList.remove('hidden');
   if (window.lucide?.createIcons) lucide.createIcons();
 }
-function nextLevel(){closeModal('modal-complete');const nl=Math.min(currentScene?.lvl||state.currentLevel,36)+1;startLevel(nl);}
+function nextLevel(){closeModal('modal-complete');const nl=Math.min(currentScene?.lvl||state.currentLevel,36)+1;if(window.EditionAds&&window.GAME_EDITION&&GAME_EDITION.ads){EditionAds.between(()=>startLevel(nl));}else{startLevel(nl);}}
 function retryLevel(){closeModal('modal-complete');const l=currentScene?.lvl||state.currentLevel;startLevel(l);}
 
 // ========== FACT POPUP ==========
@@ -1110,11 +1271,6 @@ function activateLegendWinner(){
   state.legendDate=new Date().toISOString();
   state.legendSeason=2; // Besplatna naredna sezona
 
-  // Besplaten VIP PREMIUM za naredniot period
-  state.premium=true;
-  state.premiumFree=true; // Označuva deka e besplatno od level 37
-  state.premiumExpiry=new Date(Date.now()+90*24*60*60*1000).toISOString(); // 90 dena besplatno
-
   // Rana pristap na novi nivoa
   state.earlyAccess=true;
 
@@ -1129,21 +1285,6 @@ function activateLegendWinner(){
 
   saveState(state);
 
-  // Email notifikacija (simulirana) do aleksandarmakedonskigame@gmail.com
-  console.log('[LEGEND] Nov LEGENDA! Igrac: '+state.playerName+' ja zavrshi igrata!');
-  console.log('[EMAIL] Notifikacija ispratena do: aleksandarmakedonskigame@gmail.com');
-
-  // Analytics
-  if(window.Monetization && Monetization.analytics){
-    Monetization.analytics.track('legend_winner',{
-      player:state.playerName,
-      level:37,
-      season:2,
-      premium:true,
-      email:'aleksandarmakedonskigame@gmail.com',
-    });
-  }
-
   // Prikazi LEGEND ekran
   setTimeout(()=>{
     showLegendScreen();
@@ -1155,6 +1296,8 @@ function activateLegendWinner(){
 }
 
 function showLegendScreen(){
+  // v2.1: на финалниот екран свири песната на играта
+  if(window.AQSong && AQSong.isPlaying()) AQSong.play(true);
   const modal=document.getElementById('modal-legend');
   if(modal) modal.classList.remove('hidden');
 }
@@ -1164,19 +1307,7 @@ function closeLegend(){
 }
 
 function checkLegendStatus(){
-  // Proveri dali premium istekol
-  if(state.premiumFree && state.premiumExpiry){
-    const now=new Date();
-    const expiry=new Date(state.premiumExpiry);
-    if(now>expiry){
-      state.premiumFree=false;
-      state.premium=false;
-      saveState(state);
-      return false;
-    }
-    return true;
-  }
-  return state.premiumFree || false;
+  return !!state.legendStatus;
 }
 
 // ========== ALEXANDER'S COMPANIONS ==========
@@ -1201,7 +1332,7 @@ const COMPANIONS = {
     emoji: '📚',
     color: 'text-blue-400',
     unlockLevel: 10,
-    desc: 'Најголемиот филозоф! Открива скриени монети и дава совети за загатките!',
+    desc: 'Учителот на Александар во Миеза. Ти дава двојно повеќе мудрост од свитоците!',
     ability: 'wisdom',
     abilityValue: 2,
     quote: 'Секоја загатка има решение - треба само да го најдеш!',
@@ -1220,12 +1351,12 @@ const COMPANIONS = {
   },
   ptolomej: {
     id: 'ptolomej',
-    name: 'Птоломеј',
+    name: 'Птолемеј',
     title: 'Чуварот на Знаењето',
     emoji: '🏛️',
     color: 'text-teal-400',
     unlockLevel: 20,
-    desc: 'Лојален генерал! Собира свитоци автоматски и отклучува тајни врати!',
+    desc: 'Генерал и пријател од детството. Подоцна станал крал на Египет и напишал историја на походите. Ти помага да собираш свитоци!',
     ability: 'knowledge',
     abilityValue: 1,
     quote: 'Знаењето е вечно!',
@@ -1424,39 +1555,6 @@ setInterval(() => {
   }
 }, 60000);
 
-// Pokazi Ad Giants ekran
-function showAdGiants(){
-  showScreen('adgiants');
-  renderAdGiants();
-}
-
-function renderAdGiants(){
-  const container=document.getElementById('adgiants-list');
-  if(!container) return;
-
-  const networks=Monetization.adGiants.getAllNetworks();
-  const totalECPM=Monetization.adGiants.getTotalECPM();
-
-  container.innerHTML=networks.map((n,i)=>{
-    const colors=['#FFD700','#4A90E2','#FF6B35','#9B59B6','#2ECC71','#E74C3C','#1ABC9C','#F39C12','#3498DB','#E67E22','#27AE60','#C0392B','#2980B9','#8E44AD','#16A085','#D35400','#2C3E50','#7F8C8D','#C0C0C0'];
-    const c=colors[i%colors.length];
-    return `
-      <div class="bg-black/30 rounded-xl p-4 border border-white/10 flex items-center gap-4 hover:border-yellow-500/40 transition-all">
-        <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold" style="background:${c}20;color:${c}">${i+1}</div>
-        <div class="flex-1">
-          <p class="font-bold text-[#FFF8E7]">${n.name}</p>
-          <p class="text-xs text-[#FFF8E7]/50">eCPM: $${n.ecpm.toFixed(2)}</p>
-        </div>
-        <div class="text-right">
-          <span class="px-2 py-1 rounded-full text-xs font-bold" style="background:${c}20;color:${c}">$${n.ecpm.toFixed(2)}</span>
-        </div>
-      </div>`;
-  }).join('');
-
-  document.getElementById('adgiants-total').textContent='$'+totalECPM.toFixed(2);
-  document.getElementById('adgiants-count').textContent=networks.length;
-}
-
 function renderRewards(){
   ['12','24','37'].forEach(l=>{
     const el=document.getElementById('reward-'+l);
@@ -1491,67 +1589,97 @@ function renderLeaderboard(){
   });
 }
 
-// ========== AI AGENTS ==========
+// ========== ADVISORS (историски советници) ==========
+// Внатрешните клучеви (kimi/gpt/claude/harvey) остануваат заради компатибилност
+// со зачуваниот прогрес; на екранот се прикажуваат историски личности.
+// Одговорите се однапред напишани совети — не е вештачка интелигенција.
 let currentAgent='kimi';
 
 const AGENT_PROFILES={
-  kimi:{name:'Кими',role:'Водич',desc:'🧭 Кими е твојот личен водич низ играта! Знае сè за нивоата, монетите и свитоците. Прашај го за совети и тој ќе те води до победа!',emoji:'🧭',color:'text-blue-400'},
-  gpt:{name:'GPT',role:'Учител',desc:'🎓 GPT е најмудриот учител! Објаснува историски факти за Александар Македонски и древните култури. Секој свиток е нова лекција!',emoji:'🎓',color:'text-yellow-400'},
-  claude:{name:'Клод',role:'Мајстор на Загатки',desc:'🧩 Клод е експерт за загатки! Ако си заглавен на некое ниво, тој ќе ти даде совет без да ти го расипе решението. Умен и стрплив!',emoji:'🧩',color:'text-purple-400'},
-  harvey:{name:'Харви',role:'Мотиватор',desc:'⚡ Харви е твојот личен обожавател! Секоја победа ја слави со тебе, а кога ќе паднеш те крева на нозе. Никогаш не се откажува!',emoji:'⚡',color:'text-red-400'},
+  kimi:{name:'Неарх',role:'Водич',emoji:'🧭',color:'text-blue-400',ring:'border-blue-500 bg-blue-500/20 text-blue-300',
+    desc:'Неарх бил пријател од детството и морепловец на Александар. Тој ќе ти каже како да ги поминеш нивоата.'},
+  gpt:{name:'Леонид',role:'Учител',emoji:'🎓',color:'text-yellow-400',ring:'border-yellow-500 bg-yellow-500/20 text-yellow-300',
+    desc:'Леонид бил првиот, строг учител на младиот Александар. Прашај го за историјата.'},
+  claude:{name:'Аристандар',role:'Толкувач на знаци',emoji:'🧩',color:'text-purple-400',ring:'border-purple-500 bg-purple-500/20 text-purple-300',
+    desc:'Аристандар ги толкувал знаците за Александар. Тој дава кратки предизвици и загатки.'},
+  harvey:{name:'Кратер',role:'Храбар генерал',emoji:'⚡',color:'text-red-400',ring:'border-red-500 bg-red-500/20 text-red-300',
+    desc:'Кратер бил еден од најверните генерали. Кога ќе паднеш, тој те охрабрува да продолжиш.'},
 };
 
+function escapeHTML(str){
+  return String(str).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 function selectAgent(key){
+  if(!AGENT_PROFILES[key]) key='kimi';
   currentAgent=key;
-  ['kimi','gpt','claude','harvey'].forEach(k=>{
+  Object.keys(AGENT_PROFILES).forEach(k=>{
     const btn=document.getElementById('agent-btn-'+k);
-    const profile=AGENT_PROFILES[k];
-    if(k===key){
-      btn.className=`flex-1 py-2 rounded-lg border-2 font-bold text-sm transition-all ${profile.color.replace('text-','border-').replace('400','500')} ${profile.color.replace('text-','bg-').replace('400','500')}/20 ${profile.color}`;
-    } else {
-      btn.className=`flex-1 py-2 rounded-lg border border-white/10 text-[#FFF8E7]/40 text-sm transition-all hover:border-white/20`;
-    }
+    if(!btn) return;
+    const p=AGENT_PROFILES[k];
+    btn.textContent=p.emoji+' '+p.name;
+    btn.className = k===key
+      ? `flex-1 py-2 rounded-lg border-2 font-bold text-sm transition-all ${p.ring}`
+      : 'flex-1 py-2 rounded-lg border border-white/10 text-[#FFF8E7]/50 text-sm transition-all hover:border-white/30';
   });
   const p=AGENT_PROFILES[key];
-  document.getElementById('agent-desc').innerHTML=`<strong class="${p.color}">${p.emoji} ${p.name} - ${p.role}</strong><br><span class="text-[#FFF8E7]/60">${p.desc}</span>`;
+  const d=document.getElementById('agent-desc');
+  if(d) d.innerHTML=`<strong class="${p.color}">${p.emoji} ${p.name} — ${p.role}</strong><br><span class="text-[#FFF8E7]/70">${p.desc}</span>`;
+}
+
+function advisorReply(key,msg){
+  const m=msg.toLowerCase();
+  const lvl=state.currentLevel||1;
+  const fact=FACTS[(lvl-1)%FACTS.length];
+  const randomFact=()=>FACTS[Math.floor(Math.random()*FACTS.length)];
+  if(key==='kimi'){
+    if(/скок|скокн|jump/.test(m)) return 'Од ниво 3 имаш двоен скок: притисни скок уште еднаш во воздух. Сината топка ти дава супер скок!';
+    if(/пад|дупк|празн/.test(m)) return 'Ако паднеш, се враќаш на последната 🚩 контролна точка. Помини преку неа за да ја зачуваш.';
+    if(/оган|пожар|метеор|препрек/.test(m)) return 'Оганот на земјата прескокни го. Метеорите паѓаат од небото — почекај да поминат, па продолжи.';
+    if(/свит|scroll/.test(m)) return 'Секое ниво крие еден свиток со вистински историски факт. Барај го високо над патот.';
+    return `Ниво ${lvl}: следи ги златните ✦ знаци до портата на крајот. Собирај ѕвезди и пази на оганот!`;
+  }
+  if(key==='gpt'){
+    if(/аристотел/.test(m)) return FACTS[3].text;
+    if(/букефал|коњ/.test(m)) return FACTS[2].text;
+    if(/александриј/.test(m)) return FACTS[11].text;
+    if(/роден|пела|детство/.test(m)) return FACTS[0].text;
+    if(/умре|почина|смрт/.test(m)) return FACTS[34].text;
+    return fact ? `За ова ниво: ${fact.text}` : randomFact().text;
+  }
+  if(key==='claude'){
+    const riddles=[
+      'Загатка: имам четири нозе и грива, а се плашев од сопствената сенка. Кој сум? (Букефал)',
+      'Предизвик: заврши го ова ниво без да паднеш ниту еднаш.',
+      'Загатка: јазол што никој не можеше да го одврзе. Како се викаше? (Гордиев)',
+      'Предизвик: собери ги сите ѕвезди во првиот дел од нивото.',
+      'Загатка: светилник што стана едно од седумте чуда. Како се вика? (Фарос)'
+    ];
+    return riddles[Math.floor(Math.random()*riddles.length)];
+  }
+  const cheers=[
+    'Не се откажувај! И најголемите патувања се прават чекор по чекор.',
+    'Секој пад е лекција. Стани и обиди се повторно!',
+    `Веќе си завршил ${state.completedLevels.length} нивоа. Продолжи храбро!`,
+    'Одлично! Тимот е посилен кога сите се поддржуваат.'
+  ];
+  return cheers[Math.floor(Math.random()*cheers.length)];
 }
 
 function sendAIMessage(){
   const input=document.getElementById('ai-input');
-  const msg=input.value.trim();
+  const msg=(input.value||'').trim().slice(0,200);
   if(!msg)return;
   input.value='';
-
-  // 👁️ Magic Tracking
-  if(window.MagicTracking) MagicTracking.trackAIChat(currentAgent);
-
   const chat=document.getElementById('ai-chat-area');
-  chat.innerHTML+=`<div class="ai-bubble user">${msg}</div>`;
+  chat.insertAdjacentHTML('beforeend',`<div class="ai-bubble user">${escapeHTML(msg)}</div>`);
   chat.scrollTop=chat.scrollHeight;
-
-  // Simulated responses
   const agent=AGENT_PROFILES[currentAgent];
-  let resp='';
-  const m=msg.toLowerCase();
-  if(currentAgent==='kimi'){
-    if(m.includes('hint')||m.includes('помош')||m.includes('совет')) resp='Кими: 🌟 Погледни околу себе! Секој детал е важен. Ако си заглавен, пробај да скокнеш повисоко или да побараш алтернативен пат!';
-    else if(m.includes('монет')) resp='Кими: 💰 Монетите се скриени на платформите и во воздухот! Собери ги сите за повеќе поени и ѕвезди!';
-    else resp=`Кими: ✨ Одлична работа, херој! Продолжи напред. Секое ниво те носи поблиску до мудроста! Ти си на ниво ${state.currentLevel}.`;
-  } else if(currentAgent==='gpt'){
-    if(m.includes('историј')||m.includes('александар')) resp='GPT: 📚 Дали знаеше? Александар Велики ги зачувал персиската култура и јазик на својот двор? Тоа е пример за како знаењето ги поврзува луѓето!';
-    else resp='GPT: 🎓 Светот е книга, а оние кои патуваат читаат повеќе страници. Продолжи да учиш низ секое ниво!';
-  } else if(currentAgent==='claude'){
-    if(m.includes('тешко')||m.includes('загатка')||m.includes('помогни')) resp='Клод: 🧩 Размисли чекор по чекор. Секоја загатка има решение. Обиди се да ги поврзеш точките поинаку - понекогаш најлесниот пат не е најдобриот!';
-    else resp='Клод: 💡 Твојот ум е остар како македонскиот бронзен меч! Продолжи да ги решаваш предизвиците со мудрост и трпение!';
-  } else {
-    if(m.includes('победа')||m.includes('освој')) resp='Харви: 🎉🎉🎉 YEAH! Ти си НЕВЕРОЈАТЕН! Секое освоено ниво е победа! Собери ја круната на мудроста!';
-    else resp='Харви: 💪 Не се откажувај! Секој шампион почнал како почетник! Ти можеш да ги освоиш сите 37 нивоа! Верувам во тебе!';
-  }
-
+  const resp=advisorReply(currentAgent,msg);
   setTimeout(()=>{
-    chat.innerHTML+=`<div class="ai-bubble agent"><strong class="${agent.color}">${agent.emoji} ${agent.name}</strong><br>${resp}</div>`;
+    chat.insertAdjacentHTML('beforeend',`<div class="ai-bubble agent"><strong class="${agent.color}">${agent.emoji} ${agent.name}</strong><br>${escapeHTML(resp)}</div>`);
     chat.scrollTop=chat.scrollHeight;
-  },600);
+  },500);
 }
 
 // ========== SETTINGS ==========
@@ -1576,7 +1704,7 @@ function setLang(l){
 }
 function resetProgress(){
   if(!confirm('Дали си сигурен? Целиот прогрес ќе биде избришан!'))return;
-  state={playerName:'Гостин',currentLevel:1,completedLevels:[],levelStars:{},totalCoins:0,collectedFacts:[],unlockedGifts:[],totalScore:0,sound:true,music:true,lang:'mk',bonusStreak:0,bonusDate:null,premium:false,premiumFree:false,premiumExpiry:null,earlyAccess:false,legendStatus:false,legendDate:null,legendSeason:null,legendTrophies:[],unlockedCompanions:[],activeCompanion:null,companionXP:{},kingdomBuildings:[],kingdomCoins:0,kingdomLevel:1};
+  state=defaultState();
   saveState(state);
   localStorage.removeItem(LEADER_KEY);
   alert('Прогресот е ресетиран!');
@@ -1612,61 +1740,118 @@ function claimBonus(){
   updateMenu();
 }
 
-// ========== SHOP / PAYMENTS ==========
-let pendingProduct=null,pendingPrice=0;
-function buyProduct(product,priceCents){
-  // 👁️ Magic Tracking
-  if(window.MagicTracking) MagicTracking.trackShopVisit(product);
-  const names={premium:'Премиум Пакет',coins:'500 Монети',lives:'Беспределни Животи',season:'Сезонска Картичка'};
-  const prices={premium:0.99,coins:0.49,lives:0.29,season:1.99};
-  pendingProduct=product;
-  pendingPrice=priceCents;
-  document.getElementById('payment-product').textContent=names[product];
-  document.getElementById('payment-price').textContent='$'+prices[product].toFixed(2);
-  document.getElementById('modal-payment').classList.remove('hidden');
+// ========== PREMIUM / PAYMENTS ==========
+// Чесен тек: родителска проверка → надворешна страница за плаќање
+// (на пр. Gumroad) → купувачот добива код за пристап → кодот се внесува
+// во играта. Играта НИКОГАШ не отклучува без валиден код.
+//
+// ЗА СОПСТВЕНИКОТ:
+//   1. Во paymentUrl стави го линкот од Gumroad (или друг checkout).
+//   2. Во содржината што купувачот ја добива по плаќањето стави го кодот.
+//   3. За нов код: SHA-256 од кодот (со големи букви) додај го во codeHashes.
+// SECURITY NOTICE: local access codes are not verifiable payment receipts.
+// Real purchases need a hosted checkout and server-side verification.
+const PREMIUM_CONFIG = {
+  price: '$0.99',
+  paymentUrl: '',
+  contactEmail: 'aleksandarmakedonskigame@gmail.com',
+  codeHashes: []
+};
+
+let parentGateAnswer = null;
+
+function refreshPremiumUI(){
+  document.querySelectorAll('[data-premium-price]').forEach(el=>{ el.textContent = (FREE_LEVEL_LIMIT === 37 ? 'Нема наплата (јавен тест)' : PREMIUM_CONFIG.price); });
+  const status = document.getElementById('premium-status');
+  if (status) status.classList.toggle('hidden', !hasPremiumAccess());
 }
 
-function processStripePayment(){
-  closeModal('modal-payment');
-  // Demo Stripe flow
-  const msg=pendingProduct==='premium'?'🎉 Премиум е активиран!'
-    :pendingProduct==='coins'?'🪙 500 монети додадени!'
-    :pendingProduct==='lives'?'❤️ Беспределни животи за 24ч!'
-    :'🎫 Сезонска картичка активирана!';
-  alert(msg + '\n\n(Демо режим - за реално плаќање потребен е Stripe акаунт за aleksandarmakedonskigame@gmail.com)');
-  if(pendingProduct==='coins'){state.totalCoins+=500;saveState(state);updateMenu();}
-  if(pendingProduct==='premium'){
-    state.premium=true;
-    saveState(state);
-    updateMenu();
-    alert('👑 Премиум е активиран! Сега се отклучени нивоата 9–37.');
-    showScreen('levels');
+function buyProduct(){
+  if (FREE_LEVEL_LIMIT === 37) {
+    const msg = "🎮 Јавна тест-верзија: сите 37 нивоа се бесплатни; плаќање не е активно.";
+    if (window.PWA && typeof PWA.showToast === "function") PWA.showToast(msg, 4500);
+    else alert(msg);
+    return;
+  }
+  const a = 6 + Math.floor(Math.random()*7);   // 6–12
+  const b = 3 + Math.floor(Math.random()*7);   // 3–9
+  parentGateAnswer = a*b;
+  const q = document.getElementById('gate-question');
+  if (q) q.textContent = a + ' × ' + b + ' = ?';
+  const ans = document.getElementById('gate-answer');
+  if (ans) ans.value = '';
+  document.getElementById('gate-error')?.classList.add('hidden');
+  const adult = document.getElementById('adult-confirm'); if (adult) adult.checked = false;
+  document.getElementById('pay-step-gate')?.classList.remove('hidden');
+  document.getElementById('pay-step-main')?.classList.add('hidden');
+  const msg = document.getElementById('code-msg'); if (msg) msg.textContent = '';
+  refreshPremiumUI();
+  document.getElementById('modal-payment').classList.remove('hidden');
+  setTimeout(()=>ans && ans.focus(), 50);
+}
+
+function checkParentGate(){
+  if (!document.getElementById('adult-confirm')?.checked) { const el=document.getElementById('gate-error'); if(el){el.textContent='Потребна е потврда од возрасен. Ова прашање не ја проверува вистинската возраст.';el.classList.remove('hidden');} return; }
+  const v = parseInt(document.getElementById('gate-answer').value, 10);
+  if (v === parentGateAnswer) {
+    document.getElementById('pay-step-gate').classList.add('hidden');
+    document.getElementById('pay-step-main').classList.remove('hidden');
+    const ready = !!PREMIUM_CONFIG.paymentUrl;
+    document.getElementById('pay-open-btn').classList.toggle('hidden', !ready);
+    const nr = document.getElementById('pay-not-ready');
+    nr.classList.toggle('hidden', ready);
+    const c = document.getElementById('pay-contact');
+    if (c) { c.href = 'mailto:' + PREMIUM_CONFIG.contactEmail + '?subject=' + encodeURIComponent('Премиум — Мисија на Александар'); c.textContent = PREMIUM_CONFIG.contactEmail; }
+  } else {
+    document.getElementById('gate-error').classList.remove('hidden');
+    document.getElementById('gate-error').textContent = 'Не е точно. Обидете се повторно.';
   }
 }
 
-function processPayPalPayment(){
-  closeModal('modal-payment');
-  const msg=pendingProduct==='premium'?'🎉 Премиум е активиран преку PayPal!'
-    :pendingProduct==='coins'?'🪙 500 монети додадени преку PayPal!'
-    :pendingProduct==='lives'?'❤️ Беспределни животи преку PayPal!'
-    :'🎫 Сезонска картичка преку PayPal!';
-  alert(msg + '\n\n(Демо режим - за реално плаќање потребен е PayPal акаунт за aleksandarmakedonskigame@gmail.com)');
-  if(pendingProduct==='coins'){state.totalCoins+=500;saveState(state);updateMenu();}
-  if(pendingProduct==='premium'){
-    state.premium=true;
+function openPaymentPage(){
+  if (!PREMIUM_CONFIG.paymentUrl) return;
+  window.open(PREMIUM_CONFIG.paymentUrl, '_blank', 'noopener');
+}
+
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function redeemAccessCode(){
+  const input = document.getElementById('access-code');
+  const msg = document.getElementById('code-msg');
+  const code = (input.value || '').trim().toUpperCase().replace(/\s+/g,'');
+  if (!code) return;
+  if(!Array.isArray(PREMIUM_CONFIG.codeHashes) || !PREMIUM_CONFIG.codeHashes.length){ msg.textContent='Плаќање и кодови за пристап сè уште не се активирани.'; return; }
+  if (!window.crypto || !crypto.subtle) {
+    msg.className = 'text-sm text-center mt-2 text-red-400';
+    msg.textContent = 'Кодот може да се провери само на безбедна (https) страница.';
+    return;
+  }
+  const hash = await sha256Hex(code);
+  if (PREMIUM_CONFIG.codeHashes.includes(hash)) {
+    state.premium = true;
+    state.supportActivatedAt = new Date().toISOString();
+    state.supportSource = 'access_code';
     saveState(state);
     updateMenu();
-    alert('👑 Премиум е активиран! Сега се отклучени нивоата 9–37.');
-    showScreen('levels');
+    refreshPremiumUI();
+    msg.className = 'text-sm text-center mt-2 text-green-400';
+    msg.textContent = '🎉 Премиум е отклучен! Нивоата 9–37 се достапни.';
+    if (typeof confetti === 'function') confetti({particleCount:120,spread:80,origin:{y:0.6}});
+    setTimeout(()=>{ closeModal('modal-payment'); showScreen('levels'); }, 1600);
+  } else {
+    msg.className = 'text-sm text-center mt-2 text-red-400';
+    msg.textContent = 'Кодот не е валиден. Проверете го и обидете се повторно.';
   }
 }
 
 // ========== SOCIAL SHARE ==========
 function shareSocial(platform){
   // 👁️ Magic Tracking
-  if(window.MagicTracking) MagicTracking.trackSocialShare(platform);
   const url=encodeURIComponent(window.location.href);
-  const text=encodeURIComponent('Мисија на Александар - Патот на Светлината! 37 нивоа, 4 AI агенти, најевтина игра на светот! 🇲🇰👑');
+  const text=encodeURIComponent('Мисија на Александар — Патот на Светлината! Образовна авантура со 37 нивоа и вистински историски факти. 👑');
   const urls={
     facebook:`https://www.facebook.com/sharer/sharer.php?u=${url}`,
     whatsapp:`https://wa.me/?text=${text}%20${url}`,
@@ -1711,7 +1896,7 @@ function shareTo(platform){
 }
 
 function copyShareLink(){
-  const text='Мисија на Александар - Патот на Светлината! 37 нивоа, 4 AI агенти, најевтина на светот! 👑\n'+window.location.href;
+  const text='Мисија на Александар - Патот на Светлината! 37 нивоа, вистински историски факти и квизови! 👑\n'+window.location.href;
   navigator.clipboard.writeText(text).then(()=>{
     const btn=document.getElementById('copy-btn');
     btn.innerHTML='✅ Копирано!';
@@ -1726,75 +1911,11 @@ function copyLink(){
 // ========== MODAL HELPERS ==========
 function closeModal(id){document.getElementById(id).classList.add('hidden');}
 
-// ========== PASSIVE INCOME SCREEN ==========
-function renderIncomeScreen(){
-  // Load stats
-  const transactions=JSON.parse(localStorage.getItem('aq_transactions')||'[]');
-  const adViews=parseInt(localStorage.getItem('aq_ad_views')||'0');
-  const adClicks=parseInt(localStorage.getItem('aq_ad_clicks')||'0');
-  const totalRev=transactions.reduce((s,t)=>s+(t.amount||0),0);
-  const referrals=JSON.parse(localStorage.getItem('aq_referrals')||'[]');
-
-  // Stats grid
-  const stats=document.getElementById('income-stats');
-  if(stats){
-    stats.innerHTML=`
-      <div class="bg-black/30 rounded-xl p-3 text-center border border-yellow-600/20">
-        <p class="text-2xl font-bold text-yellow-400">$${(totalRev/100).toFixed(2)}</p>
-        <p class="text-xs text-[#FFF8E7]/50">Вкупно</p>
-      </div>
-      <div class="bg-black/30 rounded-xl p-3 text-center border border-green-600/20">
-        <p class="text-2xl font-bold text-green-400">${adViews}</p>
-        <p class="text-xs text-[#FFF8E7]/50">Ad Views</p>
-      </div>
-      <div class="bg-black/30 rounded-xl p-3 text-center border border-blue-600/20">
-        <p class="text-2xl font-bold text-blue-400">${transactions.length}</p>
-        <p class="text-xs text-[#FFF8E7]/50">Купувања</p>
-      </div>
-      <div class="bg-black/30 rounded-xl p-3 text-center border border-purple-600/20">
-        <p class="text-2xl font-bold text-purple-400">${referrals.length}</p>
-        <p class="text-xs text-[#FFF8E7]/50">Реферали</p>
-      </div>`;
-  }
-
-  // Update detail stats
-  const sv=document.getElementById('stat-ad-views');
-  if(sv)sv.textContent=adViews;
-  const sc=document.getElementById('stat-ad-clicks');
-  if(sc)sc.textContent=adClicks;
-  const sr=document.getElementById('stat-ad-revenue');
-  if(sr)sr.textContent='$'+((adClicks*0.5+adViews*0.001)/100).toFixed(2);
-
-  // Referral link
-  const refInput=document.getElementById('ref-link');
-  if(refInput)refInput.value=window.location.origin+'?ref='+(state.playerName||'guest');
-
-  // Projections based on active players
-  const activePlayers=Math.max(1,transactions.length);
-  const daily=0.5*activePlayers;
-  document.getElementById('proj-daily').textContent='$'+daily.toFixed(2);
-  document.getElementById('proj-weekly').textContent='$'+(daily*7).toFixed(2);
-  document.getElementById('proj-monthly').textContent='$'+(daily*30).toFixed(2);
-  document.getElementById('proj-yearly').textContent='$'+(daily*365).toFixed(2);
-
-  if (window.lucide?.createIcons) lucide.createIcons();
-}
-
-function copyRefLink(){
-  const el=document.getElementById('ref-link');
-  if(el){
-    navigator.clipboard.writeText(el.value).then(()=>{
-      alert('📋 Реферален линк копиран! Сподели со пријатели и заработи 50 монети по пријател!');
-    });
-  }
-}
-
-function donate(amount){
-  alert(`☕ Благодариме за $${amount} донација!\n\nОва ја поддржува развојот на играта.\nСите приходи одат на: aleksandarmakedonskigame@gmail.com\n\nЗа реално плаќање потребен е Stripe/PayPal акаунт.`);
-}
-
 // ========== INIT ==========
 window.onload=function(){
+  // v1.9: стари податоци од отстранети модули (лажен „blockchain“, следење, реферали)
+  ['aq_blockchain','aq_integrity_hash','aq_referrals','aq_transactions','aq_ad_views','aq_ad_clicks']
+    .forEach(k=>{ try { localStorage.removeItem(k); } catch(e){} });
   updateMenu();
   updateToggle('sound',state.sound);
   updateToggle('music',state.music);
@@ -1802,76 +1923,7 @@ window.onload=function(){
   selectAgent('kimi');
   if (window.lucide?.createIcons) lucide.createIcons();
 
-  // Check referral
-  const params=new URLSearchParams(window.location.search);
-  const ref=params.get('ref');
-  if(ref){
-    const refs=JSON.parse(localStorage.getItem('aq_referrals')||'[]');
-    if(!refs.includes(ref)){
-      refs.push(ref);
-      localStorage.setItem('aq_referrals',JSON.stringify(refs));
-      state.totalCoins+=50;
-      saveState(state);
-      alert(`🎉 Добредојде! Доби 50 монети бонус од ${ref}!`);
-    }
-  }
+  if (typeof refreshPremiumUI === 'function') refreshPremiumUI();
 };
 
-window.AQ_GAME_BUILD_VERSION='1.8.2';
-console.log('[AQ Game] v1.8.2 Level 4 Light Fix loaded');
-// ==================================================
-// WPA МУЛТИПЛЕЈЕР – ДЕЦА ЗАЕДНО ИГРААТ
-// ==================================================
-const WPA_Multiplayer = {
-  roomId: null,
-  players: [],
-  myId: Math.random().toString(36).substring(2, 8),
-  
-  createRoom() {
-    this.roomId = 'room_' + Date.now();
-    localStorage.setItem('wpa_room', this.roomId);
-    this.players = [{ id: this.myId, level: 1, score: 0 }];
-    this.saveRoom();
-    alert(`🎮 Соба креирана! ID: ${this.roomId}\nСподели го ID-то со пријател.`);
-    return this.roomId;
-  },
-  
-  joinRoom(roomId) {
-    this.roomId = roomId;
-    this.loadRoom();
-    alert(`🎮 Се приклучи во соба ${roomId}`);
-  },
-  
-  saveRoom() {
-    localStorage.setItem(`wpa_room_${this.roomId}`, JSON.stringify(this.players));
-  },
-  
-  loadRoom() {
-    const saved = localStorage.getItem(`wpa_room_${this.roomId}`);
-    if (saved) this.players = JSON.parse(saved);
-  },
-  
-  getLeaderboard() {
-    return [...this.players].sort((a,b) => b.score - a.score);
-  },
-  
-  updateScore(level, score) {
-    const player = this.players.find(p => p.id === this.myId);
-    if (player) {
-      player.level = level;
-      player.score = score;
-      this.saveRoom();
-    }
-  }
-};
-
-// Додај копче за мултиплејер во менито
-function showMultiplayer() {
-  const action = confirm('🎮 Креирај нова соба (OK) или приклучи се (Cancel)?');
-  if (action) {
-    WPA_Multiplayer.createRoom();
-  } else {
-    const roomId = prompt('Внеси ID на соба:');
-    if (roomId) WPA_Multiplayer.joinRoom(roomId);
-  }
-}
+window.AQ_GAME_BUILD_VERSION='2.0.0';

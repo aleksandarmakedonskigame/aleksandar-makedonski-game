@@ -120,10 +120,7 @@
           <div class="aq-menu-tools-title">⚙️ Брзи алатки</div>
           <div class="aq-menu-tools-row">
             <button id="aq-menu-music-btn" class="aq-menu-tool-btn">🥁 Вклучи 7/8 ритам</button>
-            <button id="aq-menu-tasks-btn" class="aq-menu-tool-btn secondary">🤖 AI задачи</button>
-          </div>
-          <div class="aq-menu-tool-note">
-            Копчињата се преместени овде за да не се преклопуваат со играта и мобилните контроли.
+            <button id="aq-menu-tasks-btn" class="aq-menu-tool-btn secondary">🏛️ Задачи</button>
           </div>
         `;
 
@@ -141,15 +138,19 @@
           } else if(window.AQDynamic && typeof window.AQDynamic.toggleMusic === 'function'){
             window.AQDynamic.toggleMusic();
           } else {
-            alert('Музичкиот систем уште не е вчитан. Освежи ја страницата со ?v=1.8.1');
+            alert('Музиката уште се вчитува. Обиди се повторно за момент.');
           }
         };
+
+        document.addEventListener('aq-music-start', () => setTimeout(() => {
+          if (window.AQ17) musicBtn.textContent = window.AQ17.playing ? '🔇 Исклучи 7/8 ритам' : '🥁 Вклучи 7/8 ритам';
+        }, 120));
 
         tasksBtn.onclick = () => {
           if(window.AQAgents && typeof window.AQAgents.openTaskBoard === 'function'){
             window.AQAgents.openTaskBoard();
           } else {
-            alert('AI задачите уште не се вчитани. Освежи ја страницата со ?v=1.8.1');
+            alert('Задачите уште се вчитуваат. Обиди се повторно за момент.');
           }
         };
       }, 1000);

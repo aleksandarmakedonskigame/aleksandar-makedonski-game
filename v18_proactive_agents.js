@@ -1,6 +1,6 @@
 // ============================================================
-// МИСИЈА НА АЛЕКСАНДАР v1.8 — PROACTIVE AI AGENTS
-// Кими · GPT · Клод · Харви добиваат активни задачи
+// МИСИЈА НА АЛЕКСАНДАР v1.8 — СОВЕТНИЦИ СО ЗАДАЧИ
+// Неарх · Леонид · Аристандар · Кратер (однапред напишани совети, не AI)
 // ============================================================
 (function(){
   'use strict';
@@ -10,7 +10,7 @@
 
   const AGENTS = {
     kimi: {
-      name: 'Кими',
+      name: 'Неарх',
       role: 'Водич на патот',
       emoji: '🧭',
       color: '#60A5FA',
@@ -24,36 +24,36 @@
       ]
     },
     gpt: {
-      name: 'GPT',
-      role: 'Учител на мудроста',
+      name: 'Леонид',
+      role: 'Учител',
       emoji: '🎓',
       color: '#FACC15',
       taskTitle: 'Додади историска поука',
       action: 'Објасни што детето учи од нивото и поврзи го со Александар.',
       tips: [
-        'Знаењето е оган што се пали, не сад што се полни.',
-        'Александар учел од Аристотел дека мудроста е поголема од силата.',
-        'Мостовите се посилни од ѕидовите кога сакаме да поврземе луѓе.',
-        'Кога почитуваш туѓа култура, стануваш посилен лидер.'
+        'Александар учел кај Аристотел во Миеза уште од 13-годишна возраст.',
+        'Секој свиток во играта крие вистински историски факт — прочитај го!',
+        'Александрија во Египет била основана во 331 г. п.н.е.',
+        'Букефал се плашел од својата сенка, па Александар го свртел кон сонцето.'
       ]
     },
     claude: {
-      name: 'Клод',
-      role: 'Мајстор на загатки',
+      name: 'Аристандар',
+      role: 'Толкувач на знаци',
       emoji: '🧩',
       color: '#C084FC',
       taskTitle: 'Постави микро-предизвик',
       action: 'Дава кратка задача за повеќе динамика во нивото.',
       tips: [
         'Мини задача: собери 3 ѕвезди без да паднеш.',
-        'Мини задача: прескокни препрека со двоен скок.',
+        'Мини задача: прескокни оган со двоен скок.',
         'Мини задача: најди го свитокот пред да стигнеш до крајот.',
         'Мини задача: избегни метеор и продолжи без паника.'
       ]
     },
     harvey: {
-      name: 'Харви',
-      role: 'Мотиватор',
+      name: 'Кратер',
+      role: 'Храбар генерал',
       emoji: '⚡',
       color: '#FB7185',
       taskTitle: 'Крени енергија',
@@ -70,7 +70,7 @@
   const LEVEL_TASKS = [
     {type:'guide', title:'Патоказ', goal:'Стигни до крајот и собери барем 3 ѕвезди.', agents:['kimi','harvey']},
     {type:'wisdom', title:'Свиток на мудроста', goal:'Најди свиток и прочитај ја поуката.', agents:['gpt','kimi']},
-    {type:'challenge', title:'Предизвик без пад', goal:'Поминеш дел од патот без да паднеш во празнина.', agents:['claude','harvey']},
+    {type:'challenge', title:'Предизвик без пад', goal:'Помини дел од патот без да паднеш во празнина.', agents:['claude','harvey']},
     {type:'power', title:'Супер скок', goal:'Најди ја моќта од другарчињата и искористи двоен скок.', agents:['kimi','claude']},
     {type:'protocol', title:'Протокол избор', goal:'Избери мудар/мирен одговор кога ќе се појави избор.', agents:['gpt','claude']},
     {type:'focus', title:'Фокус и ритам', goal:'Следи го 7/8 ритамот и темпирај го скокот.', agents:['harvey','kimi']}
@@ -91,6 +91,7 @@
     },
 
     readState(){
+      if (window.AQStore) return window.AQStore.read();
       try { return JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'); }
       catch(e){ return {}; }
     },
@@ -232,7 +233,7 @@
         panel.id = 'aq-agent-panel';
         panel.className = 'aq-agent-panel';
         panel.innerHTML = `
-          <div class="aq-agent-title">🤖 Проактивни AI Помошници — секој има задача</div>
+          <div class="aq-agent-title">🏛️ Советници — секој има задача</div>
           <div id="aq-agent-grid" class="aq-agent-grid"></div>
         `;
         box.appendChild(panel);
@@ -250,6 +251,7 @@
     },
 
     addMenuBadge(){
+      return; // v1.9: без технички ознаки за верзија во детското мени
       setTimeout(() => {
         const box = document.querySelector('#screen-menu .mb-8');
         if(!box || document.getElementById('aq-agent-badge')) return;
@@ -424,7 +426,7 @@
         <div class="aq-agent-modal-card">
           <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
             <div>
-              <h2 style="color:#FFD700;font-size:24px;font-weight:900;margin:0">🤖 Табла на AI задачи</h2>
+              <h2 style="color:#FFD700;font-size:24px;font-weight:900;margin:0">🏛️ Табла на задачи</h2>
               <p style="opacity:.65;font-size:13px;margin-top:4px">Агентите не спијат — секој има улога во патот на играчот.</p>
             </div>
             <button id="aq-agent-close" class="aq-agent-fab" style="position:static">Затвори</button>
@@ -473,9 +475,9 @@
         </div>
         ${agentRows}
         <div style="text-align:center;margin-top:14px">
-          <button class="aq-agent-fab" style="position:static" onclick="AQAgents.agentTip('kimi')">🧭 Совет од Кими</button>
-          <button class="aq-agent-fab" style="position:static;margin-left:6px" onclick="AQAgents.agentTip('gpt')">🎓 Поука од GPT</button>
-          <button class="aq-agent-fab" style="position:static;margin-left:6px" onclick="AQAgents.agentTip('claude')">🧩 Предизвик од Клод</button>
+          <button class="aq-agent-fab" style="position:static" onclick="AQAgents.agentTip('kimi')">🧭 Совет од Неарх</button>
+          <button class="aq-agent-fab" style="position:static;margin-left:6px" onclick="AQAgents.agentTip('gpt')">🎓 Поука од Леонид</button>
+          <button class="aq-agent-fab" style="position:static;margin-left:6px" onclick="AQAgents.agentTip('claude')">🧩 Предизвик од Аристандар</button>
           <button class="aq-agent-fab" style="position:static;margin-left:6px" onclick="AQAgents.agentTip('harvey')">⚡ Мотивација</button>
         </div>
       `;

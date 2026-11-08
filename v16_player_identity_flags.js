@@ -12,16 +12,18 @@
     init() {
       this.injectStyles();
       this.patchUpdateMenuWhenReady();
-      this.injectPlayerPanel();
+      // v1.9: панелот за име/знаме го прикажува само v1.7 (порано имаше два исти панели)
       console.log('[AQ Identity] v1.6 initialized');
     },
 
     readState() {
+      if (window.AQStore) return window.AQStore.read();
       try { return JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'); }
       catch (e) { return {}; }
     },
 
     writeState(s) {
+      if (window.AQStore) { window.AQStore.write(s); return; }
       try { localStorage.setItem(SAVE_KEY, JSON.stringify(s || {})); }
       catch (e) { console.warn('[AQ Identity] save failed', e); }
     },

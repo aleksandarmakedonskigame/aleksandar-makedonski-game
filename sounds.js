@@ -22,6 +22,8 @@ const GameSounds = {
   // Pomosna funkcija za kreiranje na zvuk
   playTone(freq, duration, type = 'sine', volume = 0.3) {
     if (!this.audioCtx || !this.enabled) return;
+    try { if (typeof state !== 'undefined' && state && state.sound === false) return; } catch (e) {}
+    if (this.audioCtx.state === 'suspended') { try { this.audioCtx.resume(); } catch (e) {} }
     
     const osc = this.audioCtx.createOscillator();
     const gain = this.audioCtx.createGain();
@@ -63,7 +65,7 @@ const GameSounds = {
 
   // Zvuk na makedonski koplje
   spearThrow() {
-    Brz, ostar zvuk
+    // Brz, ostar zvuk
     this.playTone(800, 0.1, 'sine', 0.3);
     setTimeout(() => this.playTone(400, 0.3, 'sawtooth', 0.2), 50);
   },
@@ -278,18 +280,23 @@ const GameSounds = {
   disableMusic() { this.musicEnabled = false; },
 
   toggle() { this.enabled = !this.enabled; return this.enabled; },
-  toggleMusic() { this.musicEnabled = !this.musicMusic; return this.musicEnabled; }
+  toggleMusic() { this.musicEnabled = !this.musicEnabled; return this.musicEnabled; },
+
+  // Кратки имиња што ги користи game.js
+  coin() { this.collectCoin(); },
+  scroll() { this.collectScroll(); },
+  hit() { this.enemyHit(); },
+  power() { this.milestoneUnlocked(); },
+  victory() { this.levelComplete(); }
 };
 
 // Auto-inicijalizacija
 if (typeof window !== 'undefined') {
   window.GameSounds = GameSounds;
   // Inicijaliziraj pri prvo klikanje (browser politika)
-  document.addEventListener('click', () => {
-    if (!GameSounds.audioCtx) {
-      GameSounds.init();
-    }
-  }, { once: true });
+  const unlockAudio = () => { if (!GameSounds.audioCtx) GameSounds.init(); };
+  ['pointerdown', 'keydown', 'touchstart'].forEach(ev =>
+    document.addEventListener(ev, unlockAudio, { once: true, passive: true }));
 }
 
 // Eksport

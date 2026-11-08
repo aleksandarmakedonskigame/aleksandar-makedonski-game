@@ -8,10 +8,11 @@
   'use strict';
 
   var SAVE_KEY = 'alexander_quest_save';
-  var FREE_LEVEL_LIMIT = 8;
+  var FREE_LEVEL_LIMIT = (window.GAME_EDITION && window.GAME_EDITION.fullUnlock) ? 37 : 8;
   var SUPPORT_PRICE = '$0.99';
 
   function readState() {
+    if (window.AQStore) return window.AQStore.read();
     try {
       return JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
     } catch (e) {
@@ -20,6 +21,7 @@
   }
 
   function writeState(state) {
+    if (window.AQStore) { window.AQStore.write(state); return; }
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(state || {}));
     } catch (e) {
@@ -29,19 +31,7 @@
 
   function isSupportActive() {
     var s = readState();
-    return !!(s.premium || s.premiumFree || s.legendStatus);
-  }
-
-  function activateSupport(source) {
-    var s = readState();
-    s.premium = true;
-    s.supportActivatedAt = new Date().toISOString();
-    s.supportSource = source || 'demo';
-    if (!s.currentLevel || Number(s.currentLevel) < 9) s.currentLevel = 9;
-    writeState(s);
-    try {
-      if (typeof window.updateMenu === 'function') window.updateMenu();
-    } catch (e) {}
+    return !!((window.GAME_EDITION && window.GAME_EDITION.fullUnlock) || s.premium || s.premiumFree || s.legendStatus || s.earlyAccess);
   }
 
   function showSupportNotice(level) {
@@ -51,16 +41,10 @@
       'За да продолжиш од ниво ' + target + ' до 37, потребна е Premium поддршка од ' + SUPPORT_PRICE + '.\n\n' +
       'Ова помага играта да продолжи да се развива.';
 
-    if (confirm(msg + '\n\nОтвори го прозорецот за поддршка?')) {
-      if (typeof window.buyProduct === 'function') {
-        try {
-          window.buyProduct('premium', 99);
-          return;
-        } catch (e) {
-          console.warn('[AQ] buyProduct failed', e);
-        }
-      }
-      alert(msg);
+    if (typeof window.showPremiumRequired === 'function') {
+      window.showPremiumRequired(target);
+    } else {
+      toast(msg, 4000);
     }
   }
 
@@ -87,6 +71,7 @@
   }
 
   function installServiceWorker() {
+    if (window.GAME_EDITION && GAME_EDITION.pwa===false) return;
     if (!('serviceWorker' in navigator)) return;
     if (location.protocol === 'file:') return;
     window.addEventListener('load', function () {
@@ -250,46 +235,14 @@
           if (lv > FREE_LEVEL_LIMIT) {
             btn.classList.remove('unlocked', 'completed');
             btn.classList.add('locked');
-            btn.innerHTML = '<span>' + lv + '</span><span style="font-size:10px;margin-top:2px">👑 Support</span>';
+            btn.innerHTML = '<span>' + lv + '</span><span style="font-size:11px">👑</span>';
             btn.onclick = function () { showSupportNotice(lv); };
           }
         });
       };
     }
 
-    var originalStripe = window.processStripePayment;
-    window.processStripePayment = function patchedStripePayment() {
-      closeElement('modal-payment');
-      activateSupport('stripe_demo');
-      alert('🎉 Поддршката е активирана!\n\nНивоата 9–37 сега се отклучени.\n\nНапомена: ова е demo flow. За вистинска наплата треба реален Stripe/PayPal checkout.');
-      if (typeof originalStripe === 'function') {
-        try { originalStripe(); } catch (e) {}
-      }
-    };
-
-    var originalPayPal = window.processPayPalPayment;
-    window.processPayPalPayment = function patchedPayPalPayment() {
-      closeElement('modal-payment');
-      activateSupport('paypal_demo');
-      alert('🎉 Поддршката е активирана!\n\nНивоата 9–37 сега се отклучени.\n\nНапомена: ова е demo flow. За вистинска наплата треба реален Stripe/PayPal checkout.');
-      if (typeof originalPayPal === 'function') {
-        try { originalPayPal(); } catch (e) {}
-      }
-    };
-
     console.log('[AQ] v1.2.2 patch installed: next-level, touch controls, safe guards, access notice');
-  }
-
-  function addWorldUniqueBadge() {
-    setTimeout(function () {
-      var titleBox = document.querySelector('#screen-menu .mb-8');
-      if (!titleBox || document.getElementById('aq-world-unique-badge')) return;
-      var badge = document.createElement('div');
-      badge.id = 'aq-world-unique-badge';
-      badge.style.cssText = 'display:inline-block;margin-top:10px;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,215,0,.45);background:rgba(255,215,0,.10);color:#FFD700;font-size:12px;font-weight:700;letter-spacing:.3px';
-      badge.textContent = '🌍 Светски уникатна образовна авантура · 8 нивоа бесплатно · Поддршка ' + SUPPORT_PRICE;
-      titleBox.appendChild(badge);
-    }, 500);
   }
 
   function init() {
@@ -298,7 +251,6 @@
     setupInstallPrompt();
     installTouchControls();
     installGameplayPatch();
-    addWorldUniqueBadge();
     console.log('[PWA] v1.2.2 initialized');
   }
 

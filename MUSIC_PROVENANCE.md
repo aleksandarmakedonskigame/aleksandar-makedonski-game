@@ -1,0 +1,19 @@
+# Music provenance / soundtrack rights register
+
+Product: Патот на Светлината / WPA Educational Gaming Universe
+Track: audio/pesna-patot-na-svetlinata.m4a
+Length: 2:54; codec: AAC stereo; original file SHA-256: `d53ee51957a0fa33818ed25ca7f5ac0ab7c0a3396a3c91169027bf6185534697`.
+
+Provenance: The project owner reports personally creating the song in Suno and reports paying approximately EUR 10 for a subscription. This is a USER-PROVIDED CLAIM, not independently audited purchase documentation.
+The track is kept in its supplied M4A format without transcoding, watermark removal or modified metadata.
+
+In-game credit: **Music concept: Sande Smiljanov; created with Suno AI.** This credits the owner's stated creative role; it does not assert registered music copyright.
+
+Suno's September 2026 terms permit certain commercial uses of songs generated as qualifying outputs while subscribed to Pro/Premier and obtained by permitted download. Suno's own support specifically includes video games. They do not guarantee that AI output qualifies for copyright protection. Official sources:
+- https://suno.com/terms/
+- https://help.suno.com/en/articles/9601665
+- https://help.suno.com/en/articles/2416769
+
+Before a monetized or public release, preserve screenshots or export showing: exact song title/ID, creation date, active Pro/Premier plan on that date, permitted download receipt or account page, lyrics and third-party sample provenance, and terms under which tracks were generated/downloaded. Confirm no remixes of third-party outputs.
+
+Release gate: music included in the present owner's test and distribution PREVIEW packages for manual review. Commercial authorization remains UNVERIFIED until this evidence is checked and owner signs off. This archive is not a certificate of legal clearance.

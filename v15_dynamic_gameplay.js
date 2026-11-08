@@ -20,16 +20,18 @@
       this.installAudioButton();
       this.patchGameplayWhenReady();
       this.patchMenuBadge();
-      this.patchLevelCompleteText();
+      // v1.9: „Динамична мисија завршена“ (општ текст) повеќе не се додава
       console.log('[AQ Dynamic] v1.5 initialized');
     },
 
     readState() {
+      if (window.AQStore) return window.AQStore.read();
       try { return JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'); }
       catch (e) { return {}; }
     },
 
     writeState(s) {
+      if (window.AQStore) { window.AQStore.write(s); return; }
       try { localStorage.setItem(SAVE_KEY, JSON.stringify(s || {})); }
       catch (e) {}
     },
@@ -107,6 +109,7 @@
     },
 
     patchMenuBadge() {
+      return; // v1.9: без технички ознаки за верзија во детското мени
       setTimeout(() => {
         const titleBox = document.querySelector('#screen-menu .mb-8');
         if (!titleBox || document.getElementById('aq-dynamic-badge')) return;
@@ -218,6 +221,8 @@
       }
       if (a.ctx.state === 'suspended') a.ctx.resume();
       this.musicOn = !this.musicOn;
+      if (this.musicOn) document.dispatchEvent(new CustomEvent('aq-music-start',{detail:'v15'}));
+      if (!this._bus) { this._bus = true; document.addEventListener('aq-music-start', e => { if (e.detail !== 'v15' && this.musicOn) this.toggleMusic(); }); }
       a.master.gain.setTargetAtTime(this.musicOn ? 0.9 : 0.0, a.ctx.currentTime, 0.06);
       const btn = document.getElementById('aq-music-toggle');
       if (btn) btn.textContent = this.musicOn ? '🔇 Исклучи етно музика' : '🎵 Вклучи етно музика';
@@ -252,16 +257,15 @@
         this.dynamicFalls = 0;
         this.superJumpUntil = 0;
         this.dynamicMission = AQDynamic.getMissionForLevel(this.lvl);
-        AQDynamic.decorateLevel(this);
-        AQDynamic.addGameplayObjects(this);
-        AQDynamic.showLevelIntro(this);
+        // v1.9: ѕвездите, препреките, метеорите и украсите веќе ги создава game.js.
+        // Порано тука се создаваа втор пат (двојни објекти и двојна позадина).
+        // v2.0: воведот е сега картичка во сцената (game.js addGoalAndIntro)
         AQDynamic.ensureAudioForGameplay();
       };
 
       const originalUpdate = proto.update;
       proto.update = function dynamicUpdate() {
         originalUpdate.call(this);
-        AQDynamic.updateMeteors(this);
         AQDynamic.updateSuperPower(this);
       };
 
@@ -573,6 +577,7 @@
     },
 
     addWisdom(points) {
+      if (window.AQV13 && AQV13.addWisdomQuiet) { AQV13.addWisdomQuiet(points); return; }
       const s = this.readState();
       s.wisdomPoints = Number(s.wisdomPoints || 0) + Number(points || 0);
       this.writeState(s);

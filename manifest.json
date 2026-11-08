@@ -1,7 +1,8 @@
 {
   "name": "Мисија на Александар — Патот на Светлината",
   "short_name": "Александар",
-  "description": "Светска уникатна образовна игра за деца. 37 нивоа, 4 AI агенти, колективен ѕид на мудрост, личен пасош на знаењето.",
+  "description": "Образовна авантура за деца инспирирана од Александар Македонски: 37 нивоа, историски факти, квизови и помошници.",
+  "id": "./",
   "start_url": "./index.html?source=pwa",
   "scope": "./",
   "display": "standalone",
@@ -10,8 +11,11 @@
   "theme_color": "#FFD700",
   "lang": "mk",
   "dir": "ltr",
-  "categories": ["games", "education", "kids"],
-  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
+  "categories": [
+    "games",
+    "education",
+    "kids"
+  ],
   "prefer_related_applications": false,
   "icons": [
     {
@@ -60,13 +64,19 @@
       "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "screenshots": [
     {
       "src": "icons/screenshot-mobile.png",
-      "sizes": "540x720",
+      "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Игра на мобилен"
@@ -83,16 +93,14 @@
     {
       "name": "Играј",
       "short_name": "Играј",
-      "description": "Започни нова игра",
+      "description": "Продолжи со играта",
       "url": "./index.html?action=play",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "Тестамент-Капсула",
-      "short_name": "Капсула",
-      "description": "Светска уникатна функција",
-      "url": "./index.html?action=capsule",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

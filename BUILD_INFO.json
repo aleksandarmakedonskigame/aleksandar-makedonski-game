@@ -1,0 +1,14 @@
+{
+  "product": "Мисија на Александар — Патот на Светлината",
+  "version": "2.3.4",
+  "base_version": "2.3.3",
+  "date": "2026-11-08",
+  "status": "public playtest release candidate",
+  "github_repository": "aleksandarmakedonskigame/aleksandar-makedonski-game",
+  "deployment": "not performed",
+  "payment": "inactive",
+  "tv": "separate experimental package",
+  "source": "verified previous local build",
+  "song_file": "audio/pesna-patot-na-svetlinata.m4a",
+  "song_sha256": "d53ee51957a0fa33818ed25ca7f5ac0ab7c0a3396a3c91169027bf6185534697"
+}

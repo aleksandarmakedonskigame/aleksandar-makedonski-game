@@ -14,9 +14,9 @@
   const EPISODES_V14 = [
     { id: 1, range: [1, 6], title: 'Пела и Миеза — Огнот на знаењето', icon: '🔥', theme: 'учење, учител, почеток' },
     { id: 2, range: [7, 12], title: 'Гордиев Јазол — Храброст и одлука', icon: '⚔️', theme: 'одлука, истрајност, пат' },
-    { id: 3, range: [13, 18], title: 'Египет — Почит кон културите', icon: '☀️', theme: 'почит, храмови, различност' },
-    { id: 4, range: [19, 24], title: 'Вавилон — Протокол и дипломатија', icon: '🏛️', theme: 'договор, мостови, управување' },
-    { id: 5, range: [25, 31], title: 'Александрија — Градот на светлината', icon: '📚', theme: 'библиотека, наука, светлина' },
+    { id: 3, range: [13, 17], title: 'Сива, Вавилон и Персепол — Почит кон културите', icon: '☀️', theme: 'почит, храмови, различност' },
+    { id: 4, range: [18, 25], title: 'Бактрија и Индија — Патот на Истокот', icon: '🐘', theme: 'планини, реки, пријателство' },
+    { id: 5, range: [26, 31], title: 'Суза и Александрија — Наука и светлина', icon: '📚', theme: 'единство, мерење, учење' },
     { id: 6, range: [32, 37], title: 'Патот на наследството — Мудрост за иднината', icon: '🌍', theme: 'наследство, порака, светот' },
   ];
 
@@ -117,7 +117,7 @@
   }
 
   function readGameState() {
-    return readJSON(SAVE_KEY, {});
+    return window.AQStore ? window.AQStore.read() : readJSON(SAVE_KEY, {});
   }
 
   function currentLevel() {
@@ -219,13 +219,6 @@
       }
     });
 
-    if (!isAdmin && !document.getElementById('v14-admin-hint')) {
-      const hint = document.createElement('p');
-      hint.id = 'v14-admin-hint';
-      hint.className = 'text-center text-[#FFF8E7]/30 text-xs mt-2 col-span-2';
-      hint.textContent = 'Founder tools се скриени од детското мени. Отвори со ?admin=1.';
-      menuGrid.appendChild(hint);
-    }
   }
 
   function renderDailyMiniCard() {
@@ -438,8 +431,8 @@
           <div class="v14-grid">
             <div class="v14-panel"><h3 class="font-bold text-yellow-400 mb-2">🎓 Образовна цел</h3><p class="text-sm text-[#FFF8E7]/70">Играта ги учи децата за знаење, мудрост, културна почит, протокол и лидерство преку авантура.</p></div>
             <div class="v14-panel"><h3 class="font-bold text-yellow-400 mb-2">🧒 За деца</h3><p class="text-sm text-[#FFF8E7]/70">Фокусот е на истражување, собирање свитоци, прашања и позитивни вредности — не на насилство.</p></div>
-            <div class="v14-panel"><h3 class="font-bold text-yellow-400 mb-2">🤖 AI помошници</h3><p class="text-sm text-[#FFF8E7]/70">AI помошниците во играта се контролирани/симулирани водичи во интерфејсот, не отворен chat со непознати луѓе.</p></div>
-            <div class="v14-panel"><h3 class="font-bold text-yellow-400 mb-2">💛 Поддршка</h3><p class="text-sm text-[#FFF8E7]/70">Првите 8 нивоа се бесплатни. Поддршката од $0.99 е наменета за развој и одржување на проектот.</p></div>
+            <div class="v14-panel"><h3 class="font-bold text-yellow-400 mb-2">🏛️ Советници</h3><p class="text-sm text-[#FFF8E7]/70">Советниците (Неарх, Леонид, Аристандар, Кратер) одговараат со однапред напишани совети и загатки. Ова не е вештачка интелигенција и пораките не се испраќаат никаде.</p></div>
+            <div class="v14-panel"><h3 class="font-bold text-yellow-400 mb-2">💛 Премиум и приватност</h3><p class="text-sm text-[#FFF8E7]/70">Нивоата 1–8 се бесплатни. Нивоата 9–37 се отклучуваат со еднократна поддршка и код за пристап, зад родителска проверка. Играта нема реклами и не собира лични податоци. <a href="privacy.html" target="_blank" rel="noopener" style="color:#FFD700;text-decoration:underline">Повеќе</a>.</p></div>
           </div>
           <div class="text-center mt-6">
             <button onclick="showScreen('menu')" class="game-btn">← Назад во мени</button>
@@ -463,6 +456,8 @@
     },
     start(mode) {
       this.stop();
+      document.dispatchEvent(new CustomEvent('aq-music-start',{detail:'v14'}));
+      if (!this._bus) { this._bus = true; document.addEventListener('aq-music-start', e => { if (e.detail !== 'v14' && this.playing) { this.stop(); try { renderMusicButtons(); } catch (x) {} } }); }
       this.mode = mode || v14State().musicMode || 'calm';
       const cfg = this.modes[this.mode] || this.modes.calm;
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -559,7 +554,9 @@
     const original = window.showLevelComplete;
     window.showLevelComplete = function (level, score, coins, scrolls, time, stars) {
       const result = original(level, score, coins, scrolls, time, stars);
-      setTimeout(() => {
+      // v1.9: додатокот „Што научи“ од v1.4 е отстранет — беше општ текст што
+      // не се менуваше меѓу нивоата; v1.3 веќе го покажува фактот од нивото.
+      if (false) setTimeout(() => {
         const ep = getEpisodeForLevel(Number(level) || 1);
         const modal = document.getElementById('modal-complete');
         if (!modal || document.getElementById('v14-complete-extra')) return;
@@ -585,7 +582,6 @@
     window.startLevel = function (level) {
       const lv = Number(level) || 1;
       const ep = getEpisodeForLevel(lv);
-      showSmallToast(`${ep.icon} Ниво ${lv}: ${ep.title}`, 3200);
       return original(level);
     };
   }
