@@ -1,6 +1,6 @@
 # Third-party notices
 
-Овие библиотеки и фонтови се вклучени локално во `vendor/`:
+Овие библиотеки се вклучени локално во `vendor/`. За фонтовите се користат системски алтернативи без бинарни датотеки:
 
 | Компонента | Верзија | Лиценца |
 |---|---|---|
@@ -8,7 +8,7 @@
 | Lucide (икони) | 1.61.0 | ISC |
 | canvas-confetti | 1.9.2 | ISC |
 | Tailwind CSS (изграден CSS) | 3.4.19 | MIT |
-| Forum, Inter, Caveat (фонтови, преку Fontsource) | — | SIL Open Font License 1.1 |
+| System font fallbacks (Inter/Forum/Caveat CSS names) | — | Font binaries NOT redistributed in this package |
 | Песна „Патот на Светлината“ (`audio/`) | — | музика создадена со Suno; употреба според условите на сметката на авторот |
 
 Целосните текстови на лиценците се достапни на страниците на проектите:

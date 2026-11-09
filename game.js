@@ -325,6 +325,7 @@ function saveLeaderboard(lb) { localStorage.setItem(LEADER_KEY, JSON.stringify(l
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
+  if(name !== 'game' && window.WPALiving) WPALiving.setGameActive(false);
   if (name === 'levels') renderLevelSelect();
   if (name === 'museum') renderMuseum();
   if (name === 'rewards') renderRewards();
@@ -423,6 +424,7 @@ function startLevel(level) {
 
   showScreen('game');
   state.currentLevel = level;
+  if(window.WPALiving){ WPALiving.setLevel(level); WPALiving.setGameActive(true); }
   window.__AQ_SELECTED_LEVEL = state.currentLevel;
   saveState(state);
   updateMenu();
@@ -522,10 +524,14 @@ class GameplayScene extends Phaser.Scene {
     cg.fillStyle(0xB8860B,1);cg.fillCircle(8,8,5);
     cg.generateTexture('coin',16,16);
 
+    // Legible scroll artwork: the previous 12x16 icon was almost invisible on phones.
     const sg=this.make.graphics({x:0,y:0,add:false});
-    sg.fillStyle(0xF5DEB3,1);sg.fillRoundedRect(0,0,12,16,2);
-    sg.fillStyle(0xB8860B,1);sg.fillCircle(6,5,2);
-    sg.generateTexture('scroll',12,16);
+    sg.fillStyle(0x2A1C0A,0.85);sg.fillRoundedRect(1,2,30,38,6);
+    sg.fillStyle(0xF8E4AB,1);sg.fillRoundedRect(5,4,22,32,3);
+    sg.fillStyle(0xBE8B34,1);sg.fillRoundedRect(2,3,28,6,3);sg.fillRoundedRect(2,32,28,6,3);
+    sg.lineStyle(2,0x8B641D,0.9);sg.lineBetween(9,14,23,14);sg.lineBetween(9,20,23,20);sg.lineBetween(9,26,20,26);
+    sg.fillStyle(0xBC2039,1);sg.fillCircle(16,32,3);
+    sg.generateTexture('scroll',32,40);sg.destroy();
 
     const cpg=this.make.graphics({x:0,y:0,add:false});
     cpg.fillStyle(0xFF6B35,1);cpg.fillCircle(8,8,7);
@@ -634,6 +640,7 @@ class GameplayScene extends Phaser.Scene {
     try {
       this.buildLevel(this.lvl);
       this.decorateDynamicWorld(this.lvl);
+      if(window.WPALiving) WPALiving.decoratePhaser(this,this.lvl);
       this.addDynamicGameplay(this.lvl);
     } finally { Math.random=_rnd; }
     this.addGoalAndIntro(this.lvl);
@@ -642,6 +649,7 @@ class GameplayScene extends Phaser.Scene {
     this.player=this.physics.add.sprite(80,350,'player');
     this.player.setBounce(0.1).setCollideWorldBounds(false).setGravityY(800);
     this.player.setDepth(20);
+    this.depthShadow=this.add.ellipse(80,447,44,8,0x121D2B,0.29).setDepth(1);
     this.respawnX=80;
     this.cursors=this.input.keyboard.createCursorKeys();
     this.wasd=this.input.keyboard.addKeys({A:Phaser.Input.Keyboard.KeyCodes.A,D:Phaser.Input.Keyboard.KeyCodes.D,W:Phaser.Input.Keyboard.KeyCodes.W,SPACE:Phaser.Input.Keyboard.KeyCodes.SPACE});
@@ -694,11 +702,27 @@ class GameplayScene extends Phaser.Scene {
       }
     }
 
-    // Scroll
-    const sx=500+(l*80)%2000;
-    const sy=300-(l%3)*30;
-    const scroll=this.scrollGroup.create(sx,sy,'scroll');
-    this.tweens.add({targets:scroll,alpha:0.5,duration:800,yoyo:true,repeat:-1});
+    // Core gameplay: six guaranteed, visible and physically reachable scrolls.
+    // On the original build, the ONLY scroll was at x=580/y=270 (level 1),
+    // ~164px above the standing hero; players routinely finished with zero scrolls.
+    // Keep one elevated optional bonus scroll for skilled players, but make the
+    // history-learning objective discoverable and achievable for children.
+    const safeScrollPositions=[250,760,1220,1700,2220,2660];
+    safeScrollPositions.forEach((x,i)=>{
+      const y=groundY-42-(i%2)*6;
+      const scroll=this.scrollGroup.create(x,y,'scroll').setDepth(16);
+      scroll.setData('groundScroll',true);
+      const hint=this.add.text(x,y-45,'📜',{
+        fontFamily:'Arial, sans-serif',fontSize:'26px',color:'#FFF4CE',
+        stroke:'#17102E',strokeThickness:3
+      }).setOrigin(0.5).setDepth(17);
+      scroll.setData('hint',hint);
+      this.tweens.add({targets:scroll,alpha:0.78,duration:850,yoyo:true,repeat:-1});
+      this.tweens.add({targets:hint,y:y-49,duration:900,yoyo:true,repeat:-1});
+    });
+    const bonus=this.scrollGroup.create(500+(l*80)%2000,300-(l%3)*30,'scroll').setDepth(12);
+    bonus.setData('bonusScroll',true);
+    this.tweens.add({targets:bonus,alpha:0.65,duration:800,yoyo:true,repeat:-1});
 
     // Checkpoints
     this.cpGroup.create(500,groundY-30,'cp');
@@ -748,7 +772,7 @@ class GameplayScene extends Phaser.Scene {
     const bg=this.add.rectangle(0,0,440,120,l<=4?0x19354B:0x0F0C18,0.90).setStrokeStyle(2,0xFFD700,0.85);
     const t1=this.add.text(0,-30,(window.I18N&&I18N.lang()==='en'?'Level ':'Ниво ')+l+(place?' · '+place:''),{fontSize:'28px',color:'#FFD700',fontFamily:'Forum, serif'}).setOrigin(0.5);
     const t2=this.add.text(0,12,fact?('📜 '+fact.title):'',{fontSize:'16px',color:'#FFF8E7',fontFamily:'Inter'}).setOrigin(0.5);
-    const t3=this.add.text(0,40,(window.I18N&&I18N.lang()==='en'?'Reach the finish gate':'Стигни до 🏁 портата'),{fontSize:'13px',color:'#c9c2b0',fontFamily:'Inter'}).setOrigin(0.5);
+    const t3=this.add.text(0,40,(window.I18N&&I18N.lang()==='en'?'Collect 📜 scrolls and reach the finish gate':'Собирај 📜 свитоци и стигни до 🏁'),{fontSize:'13px',color:'#c9c2b0',fontFamily:'Inter'}).setOrigin(0.5);
     card.add([bg,t1,t2,t3]); card.setScale(0.7); card.setAlpha(0);
     this.tweens.add({targets:card,alpha:1,scale:1,duration:350,ease:'Back.Out'});
     this.tweens.add({targets:card,alpha:0,y:card.y-30,delay:2300,duration:450,onComplete:()=>card.destroy()});
@@ -778,6 +802,7 @@ class GameplayScene extends Phaser.Scene {
   // ========== v1.7 FULL GAMEPLAY REVISION ==========
   decorateDynamicWorld(l){
     const W=3000;
+    const depthScroll = f => (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 0 : f;
     // v2.2.1: Bright and readable early levels. Levels 1-3 are daylight,
     // level 4 is luminous twilight; later levels preserve their own atmosphere.
     const palette = l<=3
@@ -804,15 +829,16 @@ class GameplayScene extends Phaser.Scene {
     for(let i=0;i<skyBands;i++){
       const t=i/(skyBands-1);
       bg.fillStyle(blendColor(palette.sky1,palette.sky2,t),1);
-      bg.fillRect(0,Math.floor(i*500/skyBands),W,Math.ceil(500/skyBands)+1);
+      bg.fillRect(0,Math.floor(i*500/skyBands),800,Math.ceil(500/skyBands)+1);
     }
-    bg.setDepth(-30);
+    // A camera-fixed sky prevents the background from scrolling like a flat wall.
+    bg.setDepth(-30).setScrollFactor(0);
 
     // Sun / bright sky guide. Keep gameplay text and player legible from frame 1.
     const orbX=260+(l%5)*60;
     const earlyDay = l <= 4;
-    this.add.circle(orbX,80,earlyDay?84:58,0xFFF2D0,earlyDay?0.36:0.16).setDepth(-25);
-    this.add.circle(orbX,80,earlyDay?42:32,0xFFE49A,earlyDay?0.55:0.20).setDepth(-24);
+    this.add.circle(orbX,80,earlyDay?84:58,0xFFF2D0,earlyDay?0.36:0.16).setDepth(-25).setScrollFactor(depthScroll(0.025));
+    this.add.circle(orbX,80,earlyDay?42:32,0xFFE49A,earlyDay?0.55:0.20).setDepth(-24).setScrollFactor(depthScroll(0.025));
 
     // Mountains
     const mg=this.add.graphics();
@@ -821,14 +847,48 @@ class GameplayScene extends Phaser.Scene {
       const h=70+((x*19+l*53)%120);
       mg.fillTriangle(x,455,x+90,455-h,x+190,455);
     }
-    mg.setDepth(-22);
+    mg.setDepth(-22).setScrollFactor(depthScroll(0.18));
+
+    // WPA cinematic 2.5D — three parallax visual planes, with no physics bodies.
+    // Unlike a 3D engine, perspective is simulated by different scroll speeds.
+    const middle=this.add.graphics();
+    middle.fillStyle(palette.mountain,0.45);
+    for(let x=-80;x<W+200;x+=235){
+      const peak=270+((x*13+l*97)%85);
+      middle.fillTriangle(x,452,x+112,peak,x+260,452);
+      middle.fillStyle(0xC5DEE2,0.13);
+      middle.fillTriangle(x+112,peak,x+86,peak+45,x+137,peak+51);
+      middle.fillStyle(palette.mountain,0.45);
+    }
+    middle.setDepth(-20).setScrollFactor(depthScroll(0.42));
+
+    // Ancient architectural silhouettes: columns and arches recede behind play.
+    const arcade=this.add.graphics();
+    for(let x=170;x<W+200;x+=520){
+      const base=434;const hh=100+((l+x)%37);
+      arcade.fillStyle(palette.ruin,0.16);
+      arcade.fillRect(x,base-hh,15,hh);
+      arcade.fillRect(x+75,base-hh,15,hh);
+      arcade.fillRect(x-9,base-hh-12,107,14);
+      arcade.fillRect(x-13,base-6,112,9);
+      arcade.fillStyle(0x152D43,0.40);
+      arcade.fillTriangle(x+8,base-hh-13,x+43,base-hh-42,x+81,base-hh-13);
+    }
+    arcade.setDepth(-14).setScrollFactor(depthScroll(0.68));
+
+    // Very subtle fixed atmospheric light, avoiding shaders or flashing.
+    const shafts=this.add.graphics();
+    shafts.fillStyle(0xFFEFBE,earlyDay?0.06:0.025);
+    shafts.fillTriangle(orbX-15,115,Math.max(0,orbX-190),445,Math.min(800,orbX+210),445);
+    shafts.setDepth(-19).setScrollFactor(0);
 
     // Ancient pillars / ruins
     for(let x=360;x<W-280;x+=420){
       const baseY=408+((x+l*17)%24);
       const p=this.add.image(x,baseY,'dyn_pillar');
-      p.setAlpha(0.38);
+      p.setAlpha(0.43);
       p.setDepth(-10);
+      p.setScrollFactor(depthScroll(0.80));
       p.setScale(0.8+((x+l)%3)*0.12);
     }
 
@@ -1047,6 +1107,8 @@ class GameplayScene extends Phaser.Scene {
   onScroll(p,s){
     this.particles(s.x,s.y,0xFFA500,8);
     if(window.GameSounds) GameSounds.scroll();
+    const hint=s.getData('hint');if(hint?.active)hint.destroy();
+    this.floatText(s.x,s.y-26,(window.I18N&&I18N.lang()==='en'?'📜 History discovered!':'📜 Откриена историја!'),'#FFF4CE');
     s.destroy();this.scrolls++;
     const hs=document.getElementById('hud-scrolls'); if(hs) hs.textContent=this.scrolls;
     const fx = getCompanionEffects();
@@ -1080,6 +1142,7 @@ class GameplayScene extends Phaser.Scene {
 
   onEnd(){
     if(this.ended)return;this.ended=true;this.timer.destroy();
+    if(window.WPALiving) WPALiving.setGameActive(false);
     this.particles(this.player.x,this.player.y,0xFFD700,15);
     // v2.0: кратко славење пред прозорецот за крај
     this.player.setVelocity(0,0); this.player.body.allowGravity=false;
@@ -1101,8 +1164,7 @@ class GameplayScene extends Phaser.Scene {
     } else {
       state.levelStars[this.lvl]=Math.max(state.levelStars[this.lvl]||0,stars);
     }
-    state.totalScore+=this.score;
-    saveState(state);
+    // Total score is written after applying the companion bonuses below.
 
     // Milestone gifts
     if(this.lvl===12) unlockGift('12');
@@ -1117,6 +1179,8 @@ class GameplayScene extends Phaser.Scene {
     if(fx.extraLives > 0){
       this.score += fx.extraLives * 100;
     }
+    state.totalScore+=this.score;
+    saveState(state);
 
     // Leaderboard
     const lb=getLeaderboard();
@@ -1163,6 +1227,12 @@ class GameplayScene extends Phaser.Scene {
 
   update(){
     if(this.ended)return;
+    if(this.depthShadow && this.player){
+      const elevation=Math.max(0, 428-this.player.y);
+      this.depthShadow.setX(this.player.x);
+      this.depthShadow.setScale(Math.max(0.48,1-elevation/460),1);
+      this.depthShadow.setAlpha(Math.max(0.11,0.29-elevation/1000));
+    }
     this.updateDynamicMeteors();
     if(this.player.x<12){this.player.x=12;if(this.player.body.velocity.x<0)this.player.setVelocityX(0);}
     // Apply companion effects

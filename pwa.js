@@ -119,6 +119,11 @@
       var gameScreen = document.getElementById('screen-game');
       var active = gameScreen && gameScreen.classList.contains('active');
       controls.classList.toggle('active', !!active);
+      // Avoid covering the large blue JUMP control with the floating language switch
+      // on mobile touch devices; the switch remains available in the main menu.
+      var langSwitch = document.getElementById('wpa-language-toggle');
+      var isTouch = !!(window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
+      if (langSwitch) langSwitch.hidden = !!(active && isTouch);
     }
 
     var observer = new MutationObserver(syncVisibility);

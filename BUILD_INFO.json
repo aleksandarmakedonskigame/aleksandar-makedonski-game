@@ -1,14 +1,17 @@
 {
   "product": "Мисија на Александар — Патот на Светлината",
-  "version": "2.3.4",
-  "base_version": "2.3.3",
-  "date": "2026-11-08",
-  "status": "public playtest release candidate",
+  "version": "2.3.7",
+  "base_version": "2.3.6",
+  "date": "2026-11-09",
+  "status": "Living Historical Worlds source release candidate; not deployed; no commercial clearance",
   "github_repository": "aleksandarmakedonskigame/aleksandar-makedonski-game",
   "deployment": "not performed",
   "payment": "inactive",
   "tv": "separate experimental package",
-  "source": "verified previous local build",
+  "source": "v2.3.4 GitHub game source; mechanics & QA repair, 2026-11-08",
   "song_file": "audio/pesna-patot-na-svetlinata.m4a",
-  "song_sha256": "d53ee51957a0fa33818ed25ca7f5ac0ab7c0a3396a3c91169027bf6185534697"
+  "song_sha256": "d53ee51957a0fa33818ed25ca7f5ac0ab7c0a3396a3c91169027bf6185534697",
+  "visual_engine": "2.5D parallax with optional decorative gardens, birds, water and historical environments",
+  "ambient_audio": "four original algorithmically synthesized mono MP3 loops; no field recordings; opted-in only",
+  "ambient_source": "scripts/generate_original_ambience.py"
 }

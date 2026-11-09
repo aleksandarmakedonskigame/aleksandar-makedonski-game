@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="mk">
+<html lang="mk" data-game="alex">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
 <title>Мисија на Александар — Патот на Светлината</title>
-<script src="edition.js?v=2.3.4"></script>
+<script src="edition.js?v=2.3.7"></script>
 
 <!-- PWA MANIFEST -->
-<link rel="manifest" href="manifest.json?v=2.3.4">
+<link rel="manifest" href="manifest.json?v=2.3.7">
 
 <!-- PWA THEME -->
 <meta name="theme-color" content="#FFD700">
@@ -39,7 +39,7 @@
 <meta name="format-detection" content="telephone=no">
 
 <!-- v1.9: сите библиотеки се локални (vendor/) — играта работи и офлајн -->
-<link rel="stylesheet" href="vendor/tailwind.css?v=2.3.4">
+<link rel="stylesheet" href="vendor/tailwind.css?v=2.3.7">
 <script src="vendor/phaser.min.js"></script>
 <script src="vendor/lucide.min.js"></script>
 <script src="vendor/confetti.browser.js"></script>
@@ -57,7 +57,8 @@
     });
   }
 </script>
-<link rel="stylesheet" href="vendor/fonts.css?v=2.3.4">
+<link rel="stylesheet" href="vendor/fonts.css?v=2.3.7">
+<link rel="stylesheet" href="living-world.css?v=2.3.7">
 <style>
 .screen { display: none !important; }
 .screen.active { display: block !important; }
@@ -216,6 +217,9 @@ button, .game-btn, .game-btn-sm, .level-dot, .social-btn {
   .pwa-only { display: block !important; }
 }
 .pwa-only { display: none; }
+
+/* Prevent the floating language selector from obscuring the mobile JUMP key. */
+#wpa-language-toggle[hidden] { display: none !important; }
 
 /* On-screen mobile controls (D-pad + jump button) */
 #mobile-controls {
@@ -436,6 +440,12 @@ body .aq-mission-pop { right: auto; left: 16px; top: calc(64px + env(safe-area-i
     <progress id="songProgress" max="174.1" value="0" class="w-full h-3 mt-3 accent-yellow-400" aria-label="Soundtrack playback position"></progress>
     <output id="songStatus" role="status" aria-live="polite" class="block text-xs mt-1 text-yellow-100">Ready &middot; 0:00 / 2:54</output>
   </section>
+  <div class="wl-controls col-span-2 rounded-xl border border-yellow-600/30 p-3" role="group" aria-label="Природен амбиент">
+    <button type="button" data-nature-toggle aria-pressed="false" onclick="WPALiving.toggleNature()">🔇 Природа: ИСКЛ</button>
+    <button type="button" data-motion-toggle aria-pressed="true" onclick="WPALiving.toggleMotion()">🍃 Анимации: ВКЛ</button>
+    <label for="alexNatureVolume">🔉 Амбиент <input id="alexNatureVolume" data-nature-volume type="range" min="0" max="100" value="38" step="5" oninput="WPALiving.setVolume(this.value)" aria-label="Јачина на природните звуци"></label>
+    <span data-nature-caption aria-live="polite">Птици, вода и ветер — без автоматско пуштање.</span>
+  </div>
   <button onclick="Legacy.showCapsule()" class="game-btn-sm justify-center py-3 col-span-2" style="background:linear-gradient(135deg,rgba(236,72,153,.2),rgba(168,85,247,.2),rgba(59,130,246,.2));border:1px solid rgba(236,72,153,.5);color:#f0abfc;animation:pulse-glow 3s infinite">
     <i data-lucide="sparkles" class="w-4 h-4"></i> ✨ Тестамент-Капсула
   </button>
@@ -488,6 +498,10 @@ body .aq-mission-pop { right: auto; left: 16px; top: calc(64px + env(safe-area-i
     <!-- Game Canvas -->
     <div id="game-container" class="rounded-xl overflow-hidden border-2 border-yellow-600/50 shadow-2xl" style="aspect-ratio:8/5"></div>
 
+    <div class="flex flex-wrap justify-center gap-2 pt-2">
+      <button type="button" class="wl-game-toggle" data-nature-toggle aria-pressed="false" onclick="WPALiving.toggleNature()">🔇 Природа: ИСКЛ</button>
+      <span data-nature-caption class="text-xs text-yellow-100/70 self-center"></span>
+    </div>
     <!-- Level Info -->
     <div class="mt-4 text-center text-[#FFF8E7]/40 text-xs">
       Епизода <span id="hud-episode">1</span> |
@@ -1188,19 +1202,20 @@ body .aq-mission-pop { right: auto; left: 16px; top: calc(64px + env(safe-area-i
   <span>📲</span> Инсталирај го Александар
 </button>
 
-<script src="sounds.js?v=2.3.4"></script>
-<script src="legacy.js?v=2.3.4"></script>
-<script src="i18n.js?v=2.3.4"></script>
-<script src="game.js?v=2.3.4"></script>
-<script src="v13_world_protocol.js?v=2.3.4"></script>
-<script src="v14_world_unique.js?v=2.3.4"></script>
-<script src="v15_dynamic_gameplay.js?v=2.3.4"></script>
-<script src="v16_player_identity_flags.js?v=2.3.4"></script>
-<script src="v17_rhythm_identity.js?v=2.3.4"></script>
-<script src="v18_proactive_agents.js?v=2.3.4"></script>
-<script src="v181_clean_buttons.js?v=2.3.4"></script>
-<script src="song.js?v=2.3.4"></script>
-<script src="pwa.js?v=2.3.4"></script>
+<script src="sounds.js?v=2.3.7"></script>
+<script src="legacy.js?v=2.3.7"></script>
+<script src="i18n.js?v=2.3.7"></script>
+<script src="living-world.js?v=2.3.7"></script>
+<script src="game.js?v=2.3.7"></script>
+<script src="v13_world_protocol.js?v=2.3.7"></script>
+<script src="v14_world_unique.js?v=2.3.7"></script>
+<script src="v15_dynamic_gameplay.js?v=2.3.7"></script>
+<script src="v16_player_identity_flags.js?v=2.3.7"></script>
+<script src="v17_rhythm_identity.js?v=2.3.7"></script>
+<script src="v18_proactive_agents.js?v=2.3.7"></script>
+<script src="v181_clean_buttons.js?v=2.3.7"></script>
+<script src="song.js?v=2.3.7"></script>
+<script src="pwa.js?v=2.3.7"></script>
   <!-- ================================================== -->
 <!-- WPA МОБИЛНА ПОДДРШКА (Capacitor)                 -->
 <!-- ================================================== -->
@@ -1225,6 +1240,6 @@ body .aq-mission-pop { right: auto; left: 16px; top: calc(64px + env(safe-area-i
   });
 </script>
 
-<div style="text-align:center;padding:12px;font-size:14px"><a href="certificate.html" style="color:#D4AF37">🏅 Сертификат</a> · <a href="teacher.html" style="color:#D4AF37">👨‍🏫 За наставници</a> · <a href="crossover.html" style="color:#D4AF37">🍓 Протокол на времето</a></div><div role="note" style="text-align:center;max-width:920px;margin:12px auto 28px;padding:10px 16px;border:1px solid #9b8240;border-radius:12px;background:#161c2c;color:#efe1b7;font:14px system-ui,sans-serif">WPA · Educational public playtest · No active payments · MK full / EN navigation and facts (pilot) · Локална прогресија / Local progress only · v2.3.4</div>
+<div style="text-align:center;padding:12px;font-size:14px"><a href="certificate.html" style="color:#D4AF37">🏅 Сертификат</a> · <a href="teacher.html" style="color:#D4AF37">👨‍🏫 За наставници</a> · <a href="crossover.html" style="color:#D4AF37">🍓 Протокол на времето</a></div><div role="note" style="text-align:center;max-width:920px;margin:12px auto 28px;padding:10px 16px;border:1px solid #9b8240;border-radius:12px;background:#161c2c;color:#efe1b7;font:14px system-ui,sans-serif">WPA · Educational public playtest · No active payments · MK full / EN navigation and facts (pilot) · Локална прогресија / Local progress only · v2.3.7</div>
 </body>
 </html>

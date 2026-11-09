@@ -10,6 +10,7 @@
   function status(s){const e=document.getElementById('songStatus');if(e)e.textContent=s;}
   function sync(){
     const playing=!!audio&&!audio.paused&&!audio.ended;
+    if(window.WPALiving) WPALiving.setMusicPlaying(playing);
     for(const b of document.querySelectorAll('[data-song-btn]')){
       b.textContent=playing?tr('\u23f8 \u041f\u0430\u0443\u0437\u0438\u0440\u0430\u0458','\u23f8 Pause soundtrack'):tr('\u25b6 \u041f\u0443\u0448\u0442\u0438 \u0458\u0430 \u043f\u0435\u0441\u043d\u0430\u0442\u0430','\u25b6 Play soundtrack');
       b.classList.toggle('song-playing',playing);

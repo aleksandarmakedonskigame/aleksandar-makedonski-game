@@ -1,6 +1,12 @@
 // WPA educational games - controlled public playtest cache.
-const CACHE_NAME = 'wpa-alex-playtest-2.3.4';
+const CACHE_NAME = 'wpa-alex-playtest-2.3.7';
 const ASSETS = [
+  "./living-world.js",
+  "./living-world.css",
+  "./assets/ambience/songbirds.mp3",
+  "./assets/ambience/brook.mp3",
+  "./assets/ambience/breeze.mp3",
+  "./assets/ambience/dusk-insects.mp3",
   "./audio/pesna-patot-na-svetlinata.m4a",
   "./certificate.html",
   "./crossover.html",
@@ -38,20 +44,6 @@ const ASSETS = [
   "./v18_proactive_agents.js",
   "./vendor/confetti.browser.js",
   "./vendor/fonts.css",
-  "./vendor/fonts/caveat-cyrillic-400-normal.woff2",
-  "./vendor/fonts/caveat-cyrillic-700-normal.woff2",
-  "./vendor/fonts/caveat-latin-400-normal.woff2",
-  "./vendor/fonts/caveat-latin-700-normal.woff2",
-  "./vendor/fonts/forum-cyrillic-400-normal.woff2",
-  "./vendor/fonts/forum-latin-400-normal.woff2",
-  "./vendor/fonts/inter-cyrillic-400-normal.woff2",
-  "./vendor/fonts/inter-cyrillic-500-normal.woff2",
-  "./vendor/fonts/inter-cyrillic-600-normal.woff2",
-  "./vendor/fonts/inter-cyrillic-700-normal.woff2",
-  "./vendor/fonts/inter-latin-400-normal.woff2",
-  "./vendor/fonts/inter-latin-500-normal.woff2",
-  "./vendor/fonts/inter-latin-600-normal.woff2",
-  "./vendor/fonts/inter-latin-700-normal.woff2",
   "./vendor/lucide.min.js",
   "./vendor/phaser.min.js",
   "./vendor/tailwind.css"

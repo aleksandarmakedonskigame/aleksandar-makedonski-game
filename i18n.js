@@ -33,6 +33,7 @@ const TEXTS={
   // toggle button
   function makeBtn(){
     const b=document.createElement('button');
+    b.id='wpa-language-toggle';
     b.textContent = lang()==='en' ? '🌐 MK' : '🌐 EN';
     b.style.cssText='position:fixed;bottom:14px;right:14px;z-index:9999;background:#1a1a2e;color:#FFD700;border:2px solid #D4AF37;border-radius:10px;padding:8px 14px;font-size:15px;cursor:pointer;font-family:inherit';
     b.onclick=()=>{ localStorage.setItem(LANG_KEY, lang()==='en'?'mk':'en'); location.reload(); };
@@ -73,6 +74,6 @@ const TEXTS={
       if(nodes.length)nodes[0].nodeValue=' '+replacement+' ';
     }
   }
-  document.addEventListener('DOMContentLoaded',()=>{ sweep(document.body); translateChrome(); mo.observe(document.body,{childList:true,subtree:true}); makeBtn(); flagBadge(); document.title=t(DOC_TITLE_MK); });
+  document.addEventListener('DOMContentLoaded',()=>{ document.documentElement.lang=lang(); if(lang()==='en'){sweep(document.body); translateChrome(); mo.observe(document.body,{childList:true,subtree:true});} makeBtn(); flagBadge(); document.title=t(DOC_TITLE_MK); });
   window.I18N={lang:lang,t:t,fact:typeof FACT_EN!=='undefined'?(i)=>{ if(lang()==='en'&&FACT_EN[i]) return {title:FACT_EN[i][0],text:FACT_EN[i][1]}; return null; }:null};
 })();
